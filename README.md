@@ -1,7 +1,7 @@
 # capstone-compiler
 
 A Rust implementation of the Lox language from [Crafting Interpreters](https://craftinginterpreters.com) by Robert Nystrom. Some differences will be added 
-occasionally to spin our own unique twist to it.
+occasionally to give our own unique twist to it.
 
 ## How To Test
 
