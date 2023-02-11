@@ -37,7 +37,7 @@ fn run_prompt(){
     }
 }
 
-// NOTE: Unfinished. Tokenizing needed in run()
+// NOTE: Unfinished. Tokenizing needed in run() function
 fn run(source: String){
     println!("{}", source);
 }
