@@ -5,7 +5,7 @@ occasionally to give our own unique twist to it.
 
 ## How To Test
 
-In order to test the compiler you can run the program with no parameters by using
+In order to test the compiler you can run the REPL by not specifying any parameters:
 ```bash
 cargo run
 ```
