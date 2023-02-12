@@ -42,4 +42,19 @@ fn run(source: String){
     println!("{}", source);
 }
 
+fn error(line: i16, message: String){
+    report(line, "", message);
+}
+
+fn report(line: i16, location: &str, message: String){
+    let error: bool = true;
+    match error{
+        false => println!(""),
+        true => {
+            eprintln!("[line {}] Error {}: {}", line, location, message);
+            std::process::exit(1);
+        }
+    }
+}
+
 
