@@ -2,7 +2,6 @@ use std::io;
 use std::io::Write;
 use std::fs;
 
-mod token_type;
 mod token;
 
 // use token_type::TokenType;
