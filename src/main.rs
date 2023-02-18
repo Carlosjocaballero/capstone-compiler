@@ -4,6 +4,7 @@ use std::env;
 
 mod lox;
 use lox::Lox;
+use lox::error::*;
 
 fn main() {
     let args : Vec<_> = env::args().collect();
