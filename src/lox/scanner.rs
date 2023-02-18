@@ -66,8 +66,34 @@ impl Scanner{
                     false => self.add_token_token(TokenType::GreaterEqual),
                 }
             },
+            '/' =>{
+                match self.token_match('/') {
+                    // if it's a comment, keep peeking forward until the end of line
+                    // ignore everything between the // and \n 
+                    true => while self.peek() != '\n' && !self.is_at_end(){
+                        self.advance();
+                    },
+                    false => self.add_token_token(TokenType::Slash),
+                }
+            },
+            ' ' => (),
+            '\r' => (),
+            '\t' => (),
+            '\n' => self.line += 1,
             _ => {()}
         }
+    }
+
+    fn peek(&self) -> char{
+        if self.is_at_end() {return '\0'};
+        let curr_source_char : char = match self.source.chars().nth(self.current){
+            Some(x) => x,
+            None=>{
+                println!("peek(): char not asseccible by index. Returning empty space");
+                ' '
+            }
+        };
+        return curr_source_char;
     }
 
     fn token_match(&mut self, expected: char) -> bool{
