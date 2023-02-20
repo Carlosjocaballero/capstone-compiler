@@ -74,5 +74,16 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
     }
     write!(file, "}}\n\n")?;
 
+    for t in tree_types {
+        write!(file, "impl {} {{\n", t.class_name)?;
+        write!(file, 
+            "    fn accept<T>(&self, visitor: &dyn {}Visitor<T>) -> Result<T, LoxError> {{\n", 
+            base_name)?;
+        write!(file, "        visitor.visit_{}_{}(self)\n", t.base_class_name.to_lowercase(),
+            base_name.to_lowercase())?;
+        write!(file, "    }}\n")?;
+        write!(file, "}}\n\n")?;
+    }
+
     Ok(())
 }

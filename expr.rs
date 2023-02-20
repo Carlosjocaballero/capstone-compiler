@@ -34,3 +34,27 @@ pub trait ExprVisitor<T> {
     fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<T, LoxError>;
 }
 
+impl BinaryExpr {
+    fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, LoxError> {
+        visitor.visit_binary_expr(self)
+    }
+}
+
+impl GroupingExpr {
+    fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, LoxError> {
+        visitor.visit_grouping_expr(self)
+    }
+}
+
+impl LiteralExpr {
+    fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, LoxError> {
+        visitor.visit_literal_expr(self)
+    }
+}
+
+impl UnaryExpr {
+    fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, LoxError> {
+        visitor.visit_unary_expr(self)
+    }
+}
+
