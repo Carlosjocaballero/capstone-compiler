@@ -43,7 +43,7 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
         let mut fields = Vec::new();
         for arg in arg_split {
             let (t2type, name) = arg.trim().split_once(" ").unwrap(); //flip the order so that it prints letf then box
-            fields.push(format!("'{}': '{}'", name, t2type));
+            fields.push(format!("{}: {}", name, t2type));
         }
         tree_types.push(TreeType {
             base_class_name: base_class_name.trim().to_string(), 
@@ -64,6 +64,15 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
         }
         write!(file, "}}\n\n")?;
     }
+
+    write!(file, "pub trait ExprVisitor<T> {{\n")?;
+    for t in &tree_types {
+        write!(file, "    fn visit_{}_{}(&self, expr: &{}) -> Result<T, LoxError>;\n",
+            t.base_class_name.to_lowercase(),
+            base_name.to_lowercase(),
+            t.class_name)?;
+    }
+    write!(file, "}}\n\n")?;
 
     Ok(())
 }

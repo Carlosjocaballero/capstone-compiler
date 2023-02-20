@@ -9,21 +9,28 @@ pub enum Expr {
 }
 
 pub struct BinaryExpr {
-    'left': 'Box<Expr>',
-    'operator': 'token',
-    'right': 'Box<Expr>',
+    left: Box<Expr>,
+    operator: token,
+    right: Box<Expr>,
 }
 
 pub struct GroupingExpr {
-    'expression': 'Box<Expr>',
+    expression: Box<Expr>,
 }
 
 pub struct LiteralExpr {
-    'value': 'Object',
+    value: Object,
 }
 
 pub struct UnaryExpr {
-    'operator': 'Token',
-    'right': 'Box<Expr>',
+    operator: Token,
+    right: Box<Expr>,
+}
+
+pub trait ExprVisitor<T> {
+    fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<T, LoxError>;
+    fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<T, LoxError>;
+    fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<T, LoxError>;
+    fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<T, LoxError>;
 }
 
