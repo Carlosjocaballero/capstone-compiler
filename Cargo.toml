@@ -1,5 +1,5 @@
 [package]
-name = "comp"
+name = "generate-ast"
 version = "0.1.0"
 edition = "2021"
 
