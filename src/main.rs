@@ -4,7 +4,7 @@ use std::io::{self, Write};
 
 #[derive(Debug)]
 struct TreeType {
-    //base_name: String,
+    base_class_name: String,
     class_name: String,
     fields: Vec<String>,
 }
@@ -46,11 +46,24 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
             fields.push(format!("'{}': '{}'", name, t2type));
         }
         tree_types.push(TreeType {
-            //base_name, 
+            base_class_name: base_class_name.trim().to_string(), 
             class_name, 
             fields });
     }
-    print!("{:?}", tree_types);
+
+    write!(file, "\npub enum {base_name} {{\n")?;
+    for t in &tree_types {
+        write!(file, "    {}({}),\n", t.base_class_name, t.class_name)?;
+    }
+    write!(file, "}}\n\n")?;
+
+    for t in &tree_types {
+        write!(file, "pub struct {} {{\n", t.class_name)?;
+        for f in &t.fields {
+            write!(file, "    {},\n", f)?;
+        }
+        write!(file, "}}\n\n")?;
+    }
 
     Ok(())
 }
