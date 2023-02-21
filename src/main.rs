@@ -6,12 +6,12 @@ use std::fs;
 
 mod token;
 mod scanner;
-pub mod error;
+pub mod LoxError;
 
 // use token_type::TokenType;
 // use token::Token;
 // use token::Literal;
-use error::*;
+use LoxError::*;
 use token::*;
 use crate::scanner::Scanner;
 
