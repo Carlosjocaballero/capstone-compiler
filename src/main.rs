@@ -6,6 +6,7 @@ use std::fs;
 
 mod token;
 mod scanner;
+
 mod generate_ast;
 mod ast_printer;
 pub mod error;

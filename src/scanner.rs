@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::token::*;
-use crate::error::*;
+use crate::LoxError::*;
 
 pub struct Scanner{
     pub source: String,
