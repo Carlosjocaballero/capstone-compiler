@@ -6,18 +6,20 @@ use std::fs;
 
 mod token;
 mod scanner;
-pub mod LoxError;
 
-// use token_type::TokenType;
-// use token::Token;
-// use token::Literal;
-use LoxError::*;
+mod generate_ast;
+mod ast_printer;
+pub mod error;
+
+use error::*;
 use token::*;
 use crate::scanner::Scanner;
+use generate_ast::*;
 
-fn main() {
+fn main() -> io::Result<()>{
     let args : Vec<_> = env::args().collect();
-    new(&args)
+    new(&args);
+    generate_ast(&"src".to_string())
 }
 
 fn new(args: &Vec<String>) {
