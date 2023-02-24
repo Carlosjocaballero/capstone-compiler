@@ -2,7 +2,8 @@ use crate::token::*;
 
 pub struct Parser {
 	pub tokens: Vec<Token>,
-	pub current: u32
+	pub current: u32,
+	pub extends:ParseError // Edit 3.
 }
 
 impl Parser {
@@ -29,6 +30,12 @@ impl Parser {
 		}
 		false
 	}
+	fn consume(&self, tokenTypes: TokenType, message:&str) { // Edit
+		for tokenType in tokenTypes{
+			if (check(tokenType)){ return advance()};
+		}
+		throw; error(peek(), message);
+	}
 
 	fn check(&self, tokenType: TokenType) -> boolean {
 		if (isAtEnd()) { false }
@@ -53,4 +60,40 @@ impl Parser {
 	fn previous(&self) -> Token {
 		tokens.get(current - 1)
 	}
+	fn error(tokenType: TokenType, message:&str)->ParseError {
+		Lox.error(token, message);
+		return new ParseError();
+	}
+	fn error(tokenType: TokenType, message:&str) {// Edit 2
+		for tokenType in tokenTypes{
+			let temp_token = tokens;
+			if (temp_token.type == tokenType.EOF) {
+		  	report(token.line, " at end", message);
+		} else {
+		  report(token.line, " at '" + token.lexeme + "'", message);
+		}
+		}
+	}
+	  fn synchronize() { // edit 4.
+		advance();
+	
+		while (!isAtEnd()) {
+		let temp_token = previous();
+		  if (temp_token.type == SEMICOLON) return;
+	
+		  switch (peek().type) {
+			CLASS;
+			FUN;
+			VAR;
+			FOR;
+			IF;
+			WHILE;
+			PRINT;
+			RETURN;
+			return;
+		  }
+	
+		  advance();
+		}
+	  }
 }
