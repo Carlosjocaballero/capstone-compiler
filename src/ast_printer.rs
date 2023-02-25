@@ -1,11 +1,10 @@
 use crate::LoxError::*;
-use crate::token::*;
 use crate::expr::*;
 
-struct AstPrinter;
+pub struct AstPrinter;
 
 impl AstPrinter {
-    fn print(&self, expr: &Expr) -> Result<String, ScannerError> {
+    pub fn print(&self, expr: &Expr) -> Result<String, ScannerError> {
         expr.accept(self)
     }
 
@@ -29,49 +28,12 @@ impl ExprVisitor<String> for AstPrinter {
         self.parenthesize(&"group".to_string(), &[&expr.expression])
     }
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<String, ScannerError> {
-        if &Some(value) = &expr.value {
-            Ok(value.to_string())
-        } else {
-            Ok("nil".to_string())
+        match &expr.value{
+            Some(x) => Ok(x.to_string()),
+            None => Ok(String::from("nil"))
         }
     }
     fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<String, ScannerError> {
         self.parenthesize(&expr.operator.lexeme, &[&expr.right]) 
     }
 }
-
-//main method that manually instantiates a tree and prints it since theres no parser
-/* 
-fn main() {
-    let expression = Expr::Binary(
-        BinaryExpr {
-            left: Box::new(Expr::Unary(
-                UnaryExpr {
-                    operator: Token {
-                        ttype: TokenType::Minus,
-                        lexeme: "-".to_string(),
-                        literal: None,
-                        line: 1
-                    },
-                    right: Box::new(Expr::Literal(
-                        LiteralExpr { value: Some(Object::Num(123.0)) }
-                    ))
-                }
-            )),
-            operator: Token {
-                ttype: TokenType::Star,
-                lexeme: "*".to_string(),
-                literal: None,
-                line: 1
-            },
-            right: Box::new(Expr::Grouping(
-                GroupingExpr{ expression:
-                    Box::new(Expr::Literal( LiteralExpr {value: Some(Object::Num(45.67))}))}
-            ))
-        }
-    );
-
-    let printer = AstPrinter {};
-    println!("{}", printer.print(&expression).unwrap());
-}
-*/

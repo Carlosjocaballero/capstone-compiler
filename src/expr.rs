@@ -10,11 +10,11 @@ pub enum Expr {
 
 impl Expr {
     pub fn accept<T>(&self, expr_visitor: &dyn ExprVisitor<T>) -> Result<T, ScannerError> {
-        match self{
-            Expr::Binary(be) => be.accept(expr_visitor),
-            Expr::Grouping(ge) => ge.accept(expr_visitor),
-            Expr::Literal(le) => le.accept(expr_visitor),
-            Expr::Unary(ue) => ue.accept(expr_visitor),
+        match self {
+            Expr::Binary(v) => v.accept(expr_visitor), 
+            Expr::Grouping(v) => v.accept(expr_visitor), 
+            Expr::Literal(v) => v.accept(expr_visitor), 
+            Expr::Unary(v) => v.accept(expr_visitor), 
         }
     }
 }
