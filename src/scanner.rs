@@ -7,12 +7,46 @@ pub struct Scanner{
     pub tokens: Vec<Token>,
     pub start: usize,
     pub current: usize,
-    pub line: i32,
+    pub line: u32,
     pub keywords: HashMap<String, TokenType>,
     pub error : ScannerError,
 }
 
 impl Scanner{
+
+    pub fn new(source : String) -> Self{
+        
+        let mut keywords: HashMap<String, TokenType> = HashMap::new();
+
+        keywords.insert(String::from("and"), TokenType::And);
+        keywords.insert(String::from("class"), TokenType::Class);
+        keywords.insert(String::from("else"), TokenType::Else);
+        keywords.insert(String::from("false"), TokenType::False);
+        keywords.insert(String::from("for"), TokenType::For);
+        keywords.insert(String::from("fun"), TokenType::Fun);
+        keywords.insert(String::from("if"), TokenType::If);
+        keywords.insert(String::from("nil"), TokenType::Nil);
+        keywords.insert(String::from("or"), TokenType::Or);
+        keywords.insert(String::from("print"), TokenType::Print);
+        keywords.insert(String::from("return"), TokenType::Return);
+        keywords.insert(String::from("super"), TokenType::Super);
+        keywords.insert(String::from("this"), TokenType::This);
+        keywords.insert(String::from("true"), TokenType::True);
+        keywords.insert(String::from("var"), TokenType::Var);
+        keywords.insert(String::from("while"), TokenType::While);
+
+        Scanner { 
+            source: source,
+            tokens: Vec::new(),
+            start: 0,
+            current: 0,
+            line: 1,
+            keywords: keywords,
+            error: ScannerError { is_error: false } 
+        }
+        
+    }
+
     fn is_at_end(&self) -> bool{
         self.current >= self.source.len()
     }
@@ -67,7 +101,7 @@ impl Scanner{
             '>' =>{
                 match self.token_match('=') {
                     true => self.add_token(TokenType::GreaterEqual),
-                    false => self.add_token(TokenType::GreaterEqual),
+                    false => self.add_token(TokenType::Greater),
                 }
             },
             '/' =>{
