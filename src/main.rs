@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, hash::Hash};
 use std::collections::HashMap;
 use std::io;
 use std::io::Write;
@@ -6,20 +6,20 @@ use std::fs;
 
 mod token;
 mod scanner;
-
+mod expr;
 mod generate_ast;
 mod ast_printer;
-pub mod error;
+pub mod LoxError;
 
-use error::*;
+use expr::{Expr, BinaryExpr, UnaryExpr, LiteralExpr};
+use LoxError::*;
 use token::*;
 use crate::scanner::Scanner;
 use generate_ast::*;
 
-fn main() -> io::Result<()>{
+fn main(){
     let args : Vec<_> = env::args().collect();
     new(&args);
-    generate_ast(&"src".to_string())
 }
 
 fn new(args: &Vec<String>) {
@@ -54,34 +54,51 @@ fn run_prompt(){
 }
 
 fn run(source: String){
-    let mut scanner: Scanner = Scanner{
-        source: source,
-        tokens: Vec::new(),
-        start: 0,
-        current: 0,
-        line : 1,
-        keywords: HashMap::new(),
-        error: ScannerError { is_error: false }
-    };
-
-        
-    scanner.keywords.insert(String::from("and"), TokenType::And);
-    scanner.keywords.insert(String::from("class"), TokenType::Class);
-    scanner.keywords.insert(String::from("else"), TokenType::Else);
-    scanner.keywords.insert(String::from("false"), TokenType::False);
-    scanner.keywords.insert(String::from("for"), TokenType::For);
-    scanner.keywords.insert(String::from("fun"), TokenType::Fun);
-    scanner.keywords.insert(String::from("if"), TokenType::If);
-    scanner.keywords.insert(String::from("nil"), TokenType::Nil);
-    scanner.keywords.insert(String::from("or"), TokenType::Or);
-    scanner.keywords.insert(String::from("print"), TokenType::Print);
-    scanner.keywords.insert(String::from("return"), TokenType::Return);
-    scanner.keywords.insert(String::from("super"), TokenType::Super);
-    scanner.keywords.insert(String::from("this"), TokenType::This);
-    scanner.keywords.insert(String::from("true"), TokenType::True);
-    scanner.keywords.insert(String::from("var"), TokenType::Var);
-    scanner.keywords.insert(String::from("while"), TokenType::While);
-
+    let mut scanner: Scanner = Scanner::new(source);
+    
     scanner.scan_tokens();
-    println!("{:?}", scanner.tokens)
+    println!("{:?}", scanner.tokens);
+
+
+    // ----------- TESTING THE AST PRINTER --------------
+    //generate_ast(&"src".to_string());
+    // let expression: Expr = Expr::Binary(
+    //     BinaryExpr{
+    //         left: Box::new(Expr::Unary(
+    //             UnaryExpr{
+    //                 operator: Token { 
+    //                     _type: TokenType::Minus,
+    //                     lexeme: "-".to_string(), 
+    //                     literal: Literal::None,
+    //                     line: 1 
+    //                 },
+    //                 right: Box::new(Expr::Literal(
+    //                     LiteralExpr{ value : Some(Literal::Number(123.0))}
+    //                 ))  
+    //             }
+    //         )),
+    //         operator: Token { 
+    //             _type: TokenType::Star,
+    //             lexeme: "*".to_string(),
+    //             literal: Literal::None,
+    //             line: 1
+    //         },
+    //         right: Box::new(Expr::Grouping(
+    //             expr::GroupingExpr { 
+    //                 expression: Box::new(Expr::Literal(LiteralExpr {value: Some(Literal::Number(45.67))}))
+    //             }
+    //         ))
+    //     }
+    // );
+
+    // let printer= crate::ast_printer::AstPrinter{};
+
+    // let tree_string: String = match printer.print(&expression){
+    //     Ok(x) => x,
+    //     _ => String::from("Coudn't print tree")
+    // };
+
+    // println!("{}", tree_string)
+
+    
 }

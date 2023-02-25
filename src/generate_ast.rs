@@ -10,9 +10,9 @@ struct TreeType {
 
 pub fn generate_ast(output_dir: &String) -> io::Result<()> {
     define_ast(output_dir, &"Expr".to_string(), &vec![
-        "Binary   : Box<Expr> left, token operator, Box<Expr> right".to_string(),
+        "Binary   : Box<Expr> left, Token operator, Box<Expr> right".to_string(),
         "Grouping : Box<Expr> expression".to_string(),
-        "Literal  : Option<Object> value".to_string(),
+        "Literal  : Option<Literal> value".to_string(),
         "Unary    : Token operator, Box<Expr> right".to_string(),
     ])?;
     Ok(())
@@ -23,7 +23,7 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
     let mut file = File::create(path)?;
     let mut tree_types = Vec::new();
 
-    write!(file, "{}", "use crate::error::*;\n")?;
+    write!(file, "{}", "use crate::LoxError::*;\n")?;
     write!(file, "{}", "use crate::token::*;\n")?;
 
     for treetype in types {
@@ -48,7 +48,7 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
     write!(file, "}}\n\n")?;
 
     write!(file, "impl {} {{\n", base_name)?;
-    write!(file, "    pub fn accept<T>(&self, {}_visitor: &dyn {base_name}Visitor<T>) -> Result<T, LoxError> {{\n", base_name.to_lowercase())?;
+    write!(file, "    pub fn accept<T>(&self, {}_visitor: &dyn {base_name}Visitor<T>) -> Result<T, ScannerError> {{\n", base_name.to_lowercase())?;
     write!(file, "        match self {{\n")?;
     for t in &tree_types {
         write!(file, "            {}::{}(v) => v.accept({}_visitor), \n", base_name, t.base_class_name, base_name.to_lowercase())?;
@@ -67,7 +67,7 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
 
     write!(file, "pub trait ExprVisitor<T> {{\n")?;
     for t in &tree_types {
-        write!(file, "    fn visit_{}_{}(&self, expr: &{}) -> Result<T, LoxError>;\n",
+        write!(file, "    fn visit_{}_{}(&self, expr: &{}) -> Result<T, ScannerError>;\n",
             t.base_class_name.to_lowercase(),
             base_name.to_lowercase(),
             t.class_name)?;
@@ -77,7 +77,7 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
     for t in tree_types {
         write!(file, "impl {} {{\n", t.class_name)?;
         write!(file, 
-            "    pub fn accept<T>(&self, visitor: &dyn {}Visitor<T>) -> Result<T, LoxError> {{\n", 
+            "    pub fn accept<T>(&self, visitor: &dyn {}Visitor<T>) -> Result<T, ScannerError> {{\n", 
             base_name)?;
         write!(file, "        visitor.visit_{}_{}(self)\n", t.base_class_name.to_lowercase(),
             base_name.to_lowercase())?;
