@@ -12,6 +12,6 @@ cargo run
 
 We have included a *test.txt* that you can edit and run
 ```bash
-cargo run test.txt
+cargo run test.lox
 ```
 You can use any text file you want, just make sure you specify the path well (from the root folder) or place the file in the root folder
