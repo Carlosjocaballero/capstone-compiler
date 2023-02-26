@@ -81,18 +81,17 @@ impl Parser {
 		let temp_token = previous();
 		  if (temp_token == SEMICOLON){return};
 	
-		  switch (peek()) {
-			CLASS;
-			FUN;
-			VAR;
-			FOR;
-			IF;
-			WHILE;
-			PRINT;
-			RETURN;
-			return;
-		  }
-	
+		  match (peek()) {
+			peek()=>CLASS,
+			peek()=>FUN,
+			peek()=>VAR,
+			peek()=>FOR,
+			peek()=>IF,
+			peek()=>WHILE,
+			peek()=>PRINT,
+			peek()=>RETURN,
+			_=>return,
+		  };
 		  advance();
 		}
 	  }
