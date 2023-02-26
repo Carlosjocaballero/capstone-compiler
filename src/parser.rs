@@ -67,7 +67,7 @@ impl Parser {
 	fn error(tokenType: TokenType, message:&str) {// Edit 2
 		for tokenType in tokenTypes{
 			let temp_token = tokens;
-			if (temp_token.type == tokenType.EOF) {
+			if (temp_token == tokenType.EOF) {
 		  	report(token.line, " at end", message);
 		} else {
 		  report(token.line, " at '" + token.lexeme + "'", message);
@@ -79,9 +79,9 @@ impl Parser {
 	
 		while (!isAtEnd()) {
 		let temp_token = previous();
-		  if (temp_token.type == SEMICOLON) return;
+		  if (temp_token == SEMICOLON){return};
 	
-		  switch (peek().type) {
+		  switch (peek()) {
 			CLASS;
 			FUN;
 			VAR;
