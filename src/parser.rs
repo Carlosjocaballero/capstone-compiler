@@ -80,7 +80,6 @@ impl Parser {
 		while (!isAtEnd()) {
 		let temp_token = previous();
 		  if (temp_token == SEMICOLON){return};
-	
 		  match (peek()) {
 			peek()=>CLASS,
 			peek()=>FUN,
