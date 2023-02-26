@@ -45,13 +45,6 @@ Professor says can eval to StringLiteral, float, bool, nil
 //     Literal(Literal),
 //     Nil(Option<Box<Literal>>),
 // }
-/*
-Helper for Plus operator
-Adds left and right based off if they're strings or float
- */
-trait Plus{
-    fn add(&self, left: Literal, right: Literal);
-}
 
 
 pub struct Interpreter{}
@@ -212,44 +205,6 @@ impl ExprVisitor<Literal> for Interpreter{
             },
             _ => return Err(ScannerError { is_error: true })
         }
-
-        // let left = evaluate(expression::left);
-        // let right = evaluate(expression::right);
-
-        // match expression::operator::_type{
-        //     TokenType::Greater => {
-        //         return Literal::Bool((left as f64) > (right as f64));
-        //     },
-        //     TokenType::GreaterEqual => {
-        //         return Literal::Bool((left as f64) >= (right as f64));
-        //     },
-        //     TokenType::Less => {
-        //         return Literal::Bool((left as f64) < (right as f64));
-        //     },
-        //     TokenType::LessEqual => {
-        //         return Literal::Bool((left as f64) <= (right as f64));
-        //     },
-        //     TokenType::BangEqual => {
-        //         !is_equal(left, right)
-        //     },
-        //     TokenType::EqualEqual => {
-        //         is_equal(left, right)
-        //     }
-        //     TokenType::Minus => {
-        //         return Literal::Double((left as f64) - (right as f64));
-        //     },
-        //     TokenType::Plus =>{
-        //         add(left, right)
-        //     }
-        //     TokenType::Slash =>{
-        //         return Literal::Double((left as f64) / (right as f64));
-        //     },
-        //     TokenType::Star => {
-        //         return Literal::Double((left as f64) * (right as f64));
-        //     },
-        // }
-        // //Unreachable
-        // Literal::Nil(None)
     }
 }
 
