@@ -5,6 +5,7 @@ use std::io::Write;
 use std::fs;
 
 mod token;
+mod interpreter;
 mod scanner;
 mod expr;
 mod generate_ast;
@@ -59,9 +60,10 @@ fn run(source: String){
     scanner.scan_tokens();
     println!("{:?}", scanner.tokens);
 
+    let interpreter = interpreter::Interpreter{};
 
-    // ----------- TESTING THE AST PRINTER --------------
-    //generate_ast(&"src".to_string());
+    // //----------- Expr for TESTING PURPOSES --------------
+    // //generate_ast(&"src".to_string());
     // let expression: Expr = Expr::Binary(
     //     BinaryExpr{
     //         left: Box::new(Expr::Unary(
@@ -98,7 +100,7 @@ fn run(source: String){
     //     _ => String::from("Coudn't print tree")
     // };
 
-    // println!("{}", tree_string)
+    // println!("{}", tree_string);
 
-    
+    // interpreter.interpret(&Box::new(expression));   
 }
