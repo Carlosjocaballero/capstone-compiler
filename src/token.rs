@@ -21,7 +21,7 @@ impl fmt::Display for Literal{
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token{
     pub _type: TokenType,
     pub lexeme: String,
@@ -35,7 +35,7 @@ impl Token{
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType{
     // Single-character tokens
     LeftParen, RightParen, LeftBrace, RightBrace,
