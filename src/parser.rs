@@ -8,27 +8,31 @@ pub struct Parser {
 }
 
 impl Parser {
-	fn expression(&self) -> Box<Expr> {
+	pub fn parse(&mut self) -> Box<Expr> {
+		self.expression()
+	}
+
+	fn expression(&mut self) -> Box<Expr> {
 		self.equality()
 	}
 
-	fn equality(&self) -> Box<Expr> {
-		let _expr: Box<Expr> = self.comparison();
-		let mut binaryExpr: Box<Expr>;
+	fn equality(&mut self) -> Box<Expr> {
+		let mut _expr: Box<Expr> = self.comparison();
+		//let mut binaryExpr: Box<Expr> = _expr.clone();
 		while self.matching(&vec![TokenType::BangEqual, TokenType::EqualEqual]) {
 			let _operator: Token = self.previous();
 			let _right: Box<Expr> = self.comparison();
 			// expr = new Expr.Binary(expr, operator, right); 
-			binaryExpr = Box::new(Expr::Binary(BinaryExpr { 
-				left: _expr,
+			_expr = Box::new(Expr::Binary(BinaryExpr { 
+				left: _expr.clone(),
 				operator: _operator,
 				right: _right 
 			}));
 		}
-		return binaryExpr;
+		_expr
 	}
 
-	fn matching(&self, tokenTypes: &Vec<TokenType>) -> bool { 
+	fn matching(&mut self, tokenTypes: &Vec<TokenType>) -> bool { 
 		for tokenType in tokenTypes {
 			if self.check(*tokenType) {
 				self.advance();
@@ -38,7 +42,7 @@ impl Parser {
 		false
 	}
 	
-	fn consume(&self, tokenType: TokenType, message:&str) -> Token { 
+	fn consume(&mut self, tokenType: TokenType, message:&str) -> Token { 
 		// for tokenType in tokenTypes {
 		if self.check(tokenType) { self.advance() }
 		// }
@@ -46,12 +50,12 @@ impl Parser {
 		// throw!(self.error(self.peek(), message));
 	}
 
-	fn check(&self, tokenType: TokenType) -> bool {
+	fn check(&mut self, tokenType: TokenType) -> bool {
 		if self.isAtEnd() { 
 			false 
 		} else {
-			let temp_token = self.peek()._type;
-			return temp_token == tokenType; // temp_token == tokenType;
+			let temp_token_type = self.peek()._type;
+			return temp_token_type == tokenType; 
 		}
 	}
 
@@ -60,104 +64,126 @@ impl Parser {
 		self.previous()
 	}
 
-	fn isAtEnd(&self) -> bool {
-		let temp_token = self.peek();
-		return true; // temp_token == TokenType::Eof;
+	fn isAtEnd(&mut self) -> bool {
+		let temp_token_type = self.peek()._type;
+		return temp_token_type == TokenType::Eof;
 	}
 
-	fn peek(&self) -> Token {
-		self.tokens[self.current]
+	fn peek(&mut self) -> Token {
+		self.tokens[self.current].clone()
+		// let prev = self.tokens.get(self.current);	// dummy code 
+		// match prev{
+		// 	Some(token) => token,
+		// 	None => &Token { _type: TokenType::Nil, lexeme: "".to_string(), literal: Literal::None, line: 0}
+		// }
 	}
 
-	fn previous(&self) -> Token {
-		self.tokens[self.current - 1]
+	fn previous(&mut self) -> Token {
+		self.tokens[self.current - 1].clone()
 	}
 
-	fn comparison(&self) -> Box<Expr> {
-		let _expr: Expr = self.term();
-		let mut binaryExpr: BinaryExpr;
+	fn comparison(&mut self) -> Box<Expr> {
+		let mut _expr: Box<Expr> = self.term();
+		// let mut binaryExpr: Box<Expr>;
 		while self.matching(&vec![TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual]) {
 			let _operator: Token = self.previous();
-			let _right: Expr = self.term();
-			binaryExpr = BinaryExpr {
+			let _right: Box<Expr> = self.term();
+			_expr = Box::new(Expr::Binary(BinaryExpr {
 				left: _expr,
 				operator: _operator,
 				right: _right
-			};
+			}));
 		}
-		binaryExpr
+		_expr
 	}
 
-	fn term(&self) -> Expr {
-		let _expr: Expr = self.factor();
-		let mut binaryExpr: BinaryExpr;
+	fn term(&mut self) -> Box<Expr> {
+		let mut _expr: Box<Expr> = self.factor();
+		// let mut binaryExpr: Box<Expr>;
 		while self.matching(&vec![TokenType::Minus, TokenType::Plus]) {
 			let _operator: Token = self.previous();
-			let _right: Expr = self.factor();
-			binaryExpr = BinaryExpr {
+			let _right: Box<Expr> = self.factor();
+			_expr = Box::new(Expr::Binary(BinaryExpr {
 				left: _expr,
 				operator: _operator,
 				right: _right
-			};
+			}));
 		}
-		binaryExpr
+		_expr
 	}
 
-	fn factor(&self) -> Expr {
-		let _expr: Expr = self.unary();
-		let mut binaryExpr: BinaryExpr;
+	fn factor(&mut self) -> Box<Expr> {
+		let mut _expr: Box<Expr> = self.unary();
+		// let mut binaryExpr: Box<Expr>;
 		while self.matching(&vec![TokenType::Slash, TokenType::Star]) {
 			let _operator: Token = self.previous();
-			let _right: Expr = self.unary();
-			binaryExpr = BinaryExpr {
+			let _right: Box<Expr> = self.unary();
+			_expr = Box::new(Expr::Binary(BinaryExpr {
 				left: _expr,
 				operator: _operator,
 				right: _right
-			};
+			}));
 		}
-		binaryExpr
+		_expr
 	}
 
-	fn unary(&self) -> Expr {
-		if matching(&vec![TokenType::Bang, TokenType::Minus]) {
+	fn unary(&mut self) -> Box<Expr> {
+		if self.matching(&vec![TokenType::Bang, TokenType::Minus]) {
 			let _operator: Token = self.previous();
-			let _right: Expr = self.unary();
+			let _right: Box<Expr> = self.unary();
 
-			let mut unaryExpr = UnaryExpr {
+			let unaryExpr = Box::new(Expr::Unary(UnaryExpr {
 				operator: _operator,
 				right: _right
-			};
+			}));
 			unaryExpr
 		} else {
 			self.primary()
 		}
 	}
 
-	fn primary(&self) -> Expr {
-		if matching(&vec![TokenType::False]) { 
-			return new Expr.Literal(false);
-		} else if matching(&vec![TokenType::True]) { 
-			return new Expr.Literal(true);
-		} else if matching(&vec![TokenType::Nil]) { 
-			return new Expr.Literal(null);
-		} else if matching(&vec![TokenType::Number, TokenType::String]) {
-			return new Expr.Literal(self.previous().literal);
-		} else if matching(&vec![TokenType::LeftParen]) {
-			Expr expr = self.expression();
-			consume(TokenType::RightParen, "Expect ')' after expression.");
-			return new Expr.Grouping(expr);
+	fn primary(&mut self) -> Box<Expr> {
+		if self.matching(&vec![TokenType::False]) { 
+			let literalExpr = Box::new(Expr::Literal(LiteralExpr {
+				value: Some(Literal::Bool(false))
+			}));
+			literalExpr
+		} else if self.matching(&vec![TokenType::True]) { 
+			let literalExpr = Box::new(Expr::Literal(LiteralExpr {
+				value: Some(Literal::Bool(true))
+			}));
+			literalExpr
+		} else if self.matching(&vec![TokenType::Nil]) { 
+			let literalExpr = Box::new(Expr::Literal(LiteralExpr {
+				value: Some(Literal::None)
+			}));
+			literalExpr
+		} else if self.matching(&vec![TokenType::Number, TokenType::String]) {
+			let literalExpr = Box::new(Expr::Literal(LiteralExpr {
+				value: Some(self.previous().literal)
+			}));
+			literalExpr
+		} else if self.matching(&vec![TokenType::LeftParen]) {
+			let expr: Box<Expr> = self.expression();
+			self.consume(TokenType::RightParen, "Expect ')' after expression.");
+			let groupingExpr = Box::new(Expr::Grouping(GroupingExpr {
+				expression: expr
+			}));
+			groupingExpr
 		} else {
-			expr::Expr::new(self)
-			// expr::Expr::Literal = { value: Literal::None };
+			let literalExpr = Box::new(Expr::Literal(LiteralExpr {
+				value: Some(Literal::Number(10.0))
+			}));
+			literalExpr
 		}
 	}
 
-	// fn error(&self, tokenType: TokenType, message:&str) -> ParseError {
+	// fn error(&mut self, tokenType: TokenType, message:&str) -> ParseError {
 	// 	Lox.error(token, message);
 	// 	return new ParseError();
 	// }
 
-	// fn error(&self, tokenType: TokenType, message: &str) { // Edit 2
+	// fn error(&mut self, tokenType: TokenType, message: &str) { // Edit 2
 	// 	for tokenType in tokenTypes {
 	// 		let temp_token = self.tokens;
 	// 		if temp_token == TokenType::Eof {
@@ -168,21 +194,21 @@ impl Parser {
 	// 	}
 	// }
 	  
-	fn synchronize(&self) { // edit 4.
+	fn synchronize(&mut self) { // edit 4.
 		self.advance();
 	
 		while !self.isAtEnd() {
-		let temp_token = self.previous();
-		  if temp_token == TokenType::Semicolon { return };
-		  match self.peek() {
-				Class => self.peek().to_string(),
-				FUN => self.peek().to_string(),
-				VAR => self.peek().to_string(),
-				FOR => self.peek().to_string(),
-				IF => self.peek().to_string(),
-				WHILE => self.peek().to_string(),
-				PRINT => self.peek().to_string(),
-				RETURN => return
+		let temp_token_type = self.previous()._type;
+		  if temp_token_type == TokenType::Semicolon { return };
+		  match self.peek()._type {
+			Class => (),
+			FUN => (),
+			VAR => (),
+			FOR => (),
+			IF => (),
+			WHILE => (),
+			PRINT => (),
+			RETURN => return
 		  };
 		  self.advance();
 		}

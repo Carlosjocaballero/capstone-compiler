@@ -5,7 +5,7 @@ use std::io::Write;
 use std::fs;
 
 mod token;
-mod interpreter;
+// mod interpreter;
 mod scanner;
 mod expr;
 mod generate_ast;
@@ -18,6 +18,7 @@ use LoxError::*;
 use token::*;
 use crate::scanner::Scanner;
 use generate_ast::*;
+use parser::*;
 
 fn main(){
     let args : Vec<_> = env::args().collect();
@@ -61,7 +62,24 @@ fn run(source: String){
     scanner.scan_tokens();
     println!("{:?}", scanner.tokens);
 
-    let interpreter = interpreter::Interpreter{};
+    let mut parser = Parser{
+        tokens: scanner.tokens,
+        current: 0
+    };
+
+    let expression: Box<Expr> = parser.parse();
+    
+    let printer= crate::ast_printer::AstPrinter{};
+
+    let tree_string: String = match printer.print(&expression){
+        Ok(x) => x,
+        _ => String::from("Coudn't print tree")
+    };
+
+    println!("{}", tree_string);
+
+
+    // let interpreter = interpreter::Interpreter{};
 
     // //----------- Expr for TESTING PURPOSES --------------
     // //generate_ast(&"src".to_string());
