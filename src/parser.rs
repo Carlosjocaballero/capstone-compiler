@@ -71,11 +71,6 @@ impl Parser {
 
 	fn peek(&mut self) -> Token {
 		self.tokens[self.current].clone()
-		// let prev = self.tokens.get(self.current);	// dummy code 
-		// match prev{
-		// 	Some(token) => token,
-		// 	None => &Token { _type: TokenType::Nil, lexeme: "".to_string(), literal: Literal::None, line: 0}
-		// }
 	}
 
 	fn previous(&mut self) -> Token {
@@ -84,7 +79,6 @@ impl Parser {
 
 	fn comparison(&mut self) -> Box<Expr> {
 		let mut _expr: Box<Expr> = self.term();
-		// let mut binaryExpr: Box<Expr>;
 		while self.matching(&vec![TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual]) {
 			let _operator: Token = self.previous();
 			let _right: Box<Expr> = self.term();
@@ -99,7 +93,6 @@ impl Parser {
 
 	fn term(&mut self) -> Box<Expr> {
 		let mut _expr: Box<Expr> = self.factor();
-		// let mut binaryExpr: Box<Expr>;
 		while self.matching(&vec![TokenType::Minus, TokenType::Plus]) {
 			let _operator: Token = self.previous();
 			let _right: Box<Expr> = self.factor();
@@ -114,7 +107,6 @@ impl Parser {
 
 	fn factor(&mut self) -> Box<Expr> {
 		let mut _expr: Box<Expr> = self.unary();
-		// let mut binaryExpr: Box<Expr>;
 		while self.matching(&vec![TokenType::Slash, TokenType::Star]) {
 			let _operator: Token = self.previous();
 			let _right: Box<Expr> = self.unary();
@@ -172,7 +164,7 @@ impl Parser {
 			groupingExpr
 		} else {
 			let literalExpr = Box::new(Expr::Literal(LiteralExpr {
-				value: Some(Literal::Number(10.0))
+				value: Some(Literal::None)
 			}));
 			literalExpr
 		}
