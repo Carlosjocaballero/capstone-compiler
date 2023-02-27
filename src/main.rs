@@ -79,7 +79,8 @@ fn run(source: String){
     println!("{}", tree_string);
 
 
-    // let interpreter = interpreter::Interpreter{};
+    let interpreter = interpreter::Interpreter{};
+    interpreter.interpret(&expression); 
 
     // //----------- Expr for TESTING PURPOSES --------------
     // //generate_ast(&"src".to_string());
@@ -121,5 +122,5 @@ fn run(source: String){
 
     // println!("{}", tree_string);
 
-    // interpreter.interpret(&Box::new(expression));   
+      
 }
