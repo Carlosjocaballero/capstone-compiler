@@ -1,9 +1,10 @@
 use std::fmt;
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Literal{
     Identifier(String),
     StringLiteral(String),
     Number(f64),
+    Bool(bool),
     None
 }
 
@@ -14,6 +15,7 @@ impl fmt::Display for Literal{
             Literal::Identifier(identifier_string) => write!(f, "{}", identifier_string),
             Literal::StringLiteral(literal_string) => write!(f, "{}", literal_string),
             Literal::Number(num) => write!(f, "{}", num),
+            Literal::Bool(bool) => write!(f, "{}", bool),
             Literal::None => write!(f, "None") 
         }
     }

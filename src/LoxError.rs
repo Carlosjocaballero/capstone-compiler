@@ -1,3 +1,5 @@
+use crate::Token;
+
 pub struct ScannerError{
     pub is_error: bool
 }
@@ -11,5 +13,11 @@ impl ScannerError{
         println!("[line {}] Error {}: {}", line, _where, message);
         self.is_error = true;
     }
+
+    pub fn run_time_error(&mut self, operator: &Token, message: String){
+        println!("{} \n[line {}]", message, operator.line);
+        self.is_error = true;
+    }
 }
+
 
