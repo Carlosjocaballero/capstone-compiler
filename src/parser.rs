@@ -13,26 +13,26 @@ impl Parser {
 	}
 
 	fn equality(&self) -> Box<Expr> {
-		let _expr: Expr = self.comparison();
-		let mut binaryExpr: BinaryExpr;
+		let _expr: Box<Expr> = self.comparison();
+		let mut binaryExpr: Box<Expr>;
 		while self.matching(&vec![TokenType::BangEqual, TokenType::EqualEqual]) {
 			let _operator: Token = self.previous();
-			let _right: Expr = self.comparison();
+			let _right: Box<Expr> = self.comparison();
 			// expr = new Expr.Binary(expr, operator, right); 
-			binaryExpr = BinaryExpr {
+			binaryExpr = Box::new(Expr::Binary(BinaryExpr { 
 				left: _expr,
 				operator: _operator,
-				right: _right
-			};
+				right: _right 
+			}));
 		}
-		binaryExpr
+		return binaryExpr;
 	}
 
-	fn matching(&self, tokenTypes: Vec<TokenType>) -> bool { 
+	fn matching(&self, tokenTypes: &Vec<TokenType>) -> bool { 
 		for tokenType in tokenTypes {
-			if self.check(tokenType) {
+			if self.check(*tokenType) {
 				self.advance();
-				true
+				return true;
 			}
 		}
 		false
@@ -50,8 +50,8 @@ impl Parser {
 		if self.isAtEnd() { 
 			false 
 		} else {
-			let temp_token = self.peek();
-			return true; // temp_token == tokenType;
+			let temp_token = self.peek()._type;
+			return temp_token == tokenType; // temp_token == tokenType;
 		}
 	}
 
@@ -73,7 +73,7 @@ impl Parser {
 		self.tokens[self.current - 1]
 	}
 
-	fn comparison(&self) -> Expr {
+	fn comparison(&self) -> Box<Expr> {
 		let _expr: Expr = self.term();
 		let mut binaryExpr: BinaryExpr;
 		while self.matching(&vec![TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual]) {
