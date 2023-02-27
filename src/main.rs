@@ -5,7 +5,7 @@ use std::io::Write;
 use std::fs;
 
 mod token;
-// mod interpreter;
+mod interpreter;
 mod scanner;
 mod expr;
 mod generate_ast;
