@@ -47,7 +47,7 @@ Professor says can eval to StringLiteral, float, bool, nil
 // }
 
 
-pub struct Interpreter{}
+pub struct Interpreter{ error: InterpreterError}
 
 impl Interpreter{
     pub fn interpret(&self, expression: &Box<Expr>){
@@ -55,6 +55,8 @@ impl Interpreter{
         if let Ok(value) = value{
         println!("{}", self.stringify(&value))
         }
+
+        if self.error.is_error
     }
 
     fn stringify(&self, expression: &Literal) -> String{
@@ -75,11 +77,13 @@ impl Interpreter{
         let mut err = ScannerError{
             is_error: false
         };
-        if let Literal::Number(_x) = _operand{return;} else{ScannerError::run_time_error(&mut err, _operator, "Operand must be a number.".to_string())}
+        if let Literal::Number(_x) = _operand{return;} else{self.error.run_time_error(&mut err, _operator, "Operand must be a number.".to_string())}
     }
 
     fn check_number_operands(&self, _operator: &Token, _left: &Literal, _right: &Literal){
-        let mut err: ScannerError = ScannerError { is_error: false };
+        ///////////////////////////////////////////////////////////////
+        /// //////////////////////////////////////////////////////////
+        /// CHECK HERE
         if let (Literal::Number(_x), Literal::Number(_y)) = (&_left,&_right){return;} else{
             ScannerError::run_time_error(&mut err, _operator, "Operands must be numbers.".to_string());
         }

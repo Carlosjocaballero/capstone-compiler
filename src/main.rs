@@ -60,11 +60,12 @@ fn run(source: String){
     let mut scanner: Scanner = Scanner::new(source);
     
     scanner.scan_tokens();
-    println!("{:?}", scanner.tokens);
+    // println!("{:?}", scanner.tokens);
 
     let mut parser = Parser{
         tokens: scanner.tokens,
-        current: 0
+        current: 0,
+        parser_error: ParseError { is_error: false }
     };
 
     let expression: Box<Expr> = parser.parse();
