@@ -11,6 +11,7 @@ mod expr;
 mod generate_ast;
 mod ast_printer;
 mod parser;
+mod resolver;
 pub mod LoxError;
 
 use expr::{Expr, BinaryExpr, UnaryExpr, LiteralExpr};
