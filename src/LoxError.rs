@@ -20,7 +20,7 @@ impl ErrorTools for ScannerError{
 
 impl ErrorTools for ParseError{
     fn report(&mut self, line: u32, _where: String, message:String) {
-        println!("[line {}] Error {}: {}", line, _where, message);
+        println!("Parser -- [line {}] Error {}: {}", line, _where, message);
         self.is_error = true;
     }
 

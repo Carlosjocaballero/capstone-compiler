@@ -1,18 +1,4 @@
-// Need to do something so that I can check the type of the variable
-// What's left: Runtime errors
-
-/*
-Running file errors:
-For the functions that aren't in ExprVisitor... need to separate it because it's not a part of the trait
-
-expression::* doesn't work. says: use of undeclared crate or module `expression`
- */
-
-use std::any::{Any, TypeId}; //May not need this, may use Option<Object> instead
-use std::fmt::Debug;
-use std::option::Option;
-use crate::scanner::Scanner;
-use crate::{token::*, LoxError};
+use crate::token::*;
 use crate::expr::*;
 use crate::LoxError::*;
 
@@ -47,16 +33,14 @@ Professor says can eval to StringLiteral, float, bool, nil
 // }
 
 
-pub struct Interpreter{ error: InterpreterError}
+pub struct Interpreter{ pub error: InterpreterError}
 
 impl Interpreter{
-    pub fn interpret(&self, expression: &Box<Expr>){
+    pub fn interpret(&mut self, expression: &Box<Expr>){
         let value = self.evaluate(&expression);
         if let Ok(value) = value{
         println!("{}", self.stringify(&value))
         }
-
-        if self.error.is_error
     }
 
     fn stringify(&self, expression: &Literal) -> String{
@@ -73,19 +57,13 @@ impl Interpreter{
     }
     //IN PROGRESS
     //Need to implement a way to check the type of the operand
-    fn check_number_operand(&self, _operator: &Token, _operand: &Literal){
-        let mut err = ScannerError{
-            is_error: false
-        };
-        if let Literal::Number(_x) = _operand{return;} else{self.error.run_time_error(&mut err, _operator, "Operand must be a number.".to_string())}
+    fn check_number_operand(&mut self, _operator: &Token, _operand: &Literal){
+        if let Literal::Number(_x) = _operand{return;} else{self.error.run_time_error( _operator, "Operand must be a number.".to_string())}
     }
 
-    fn check_number_operands(&self, _operator: &Token, _left: &Literal, _right: &Literal){
-        ///////////////////////////////////////////////////////////////
-        /// //////////////////////////////////////////////////////////
-        /// CHECK HERE
+    fn check_number_operands(&mut self, _operator: &Token, _left: &Literal, _right: &Literal){
         if let (Literal::Number(_x), Literal::Number(_y)) = (&_left,&_right){return;} else{
-            ScannerError::run_time_error(&mut err, _operator, "Operands must be numbers.".to_string());
+            self.error.run_time_error(_operator, "Operands must be numbers.".to_string());
         }
     }
 
@@ -104,7 +82,7 @@ impl Interpreter{
             return a == b;    
     }   
 
-    fn evaluate(&self, expression: &Box<Expr>) -> Result<Literal, ScannerError>{
+    fn evaluate(&mut self, expression: &Box<Expr>) -> Result<Literal, ScannerError>{
         return expression.accept(self)
     }
 
@@ -112,17 +90,16 @@ impl Interpreter{
 
 impl ExprVisitor<Literal> for Interpreter{
     //will return the value related to the expression
-    fn visit_literal_expr(&self, expression: &LiteralExpr) -> Result<Literal, ScannerError>{
+    fn visit_literal_expr(&mut self, expression: &LiteralExpr) -> Result<Literal, ScannerError>{
         match &expression.value{
             Some(x) => Ok(x.clone()),
             None => {
-                let result : Result<Literal, ScannerError> = Ok(Literal::None);
-                result
+                Ok(Literal::None)
             }
         }
     }
 
-    fn visit_unary_expr(&self, expression: &UnaryExpr) -> Result<Literal, ScannerError>{
+    fn visit_unary_expr(&mut self, expression: &UnaryExpr) -> Result<Literal, ScannerError>{
         let right = self.evaluate(&expression.right); //be Box<Expr>
 
         let right = match right{
@@ -144,7 +121,7 @@ impl ExprVisitor<Literal> for Interpreter{
         //Unreachable
     }
 
-    fn visit_grouping_expr(&self, expression: &GroupingExpr) -> Result<Literal, ScannerError>{
+    fn visit_grouping_expr(&mut self, expression: &GroupingExpr) -> Result<Literal, ScannerError>{
         match self.evaluate(&expression.expression){
             Ok(x) => Ok(x),
             Err(_) => Ok(Literal::None),
@@ -152,7 +129,7 @@ impl ExprVisitor<Literal> for Interpreter{
     }
 
     // TEST TO SEE IF THIS WORKS. MIGHT NOT WORK
-    fn visit_binary_expr(&self, expression: &BinaryExpr) -> Result<Literal, ScannerError>{
+    fn visit_binary_expr(&mut self, expression: &BinaryExpr) -> Result<Literal, ScannerError>{
         let left = match self.evaluate(&expression.left){
             Ok(x) => x,
             Err(_) => Literal::None
@@ -194,8 +171,8 @@ impl ExprVisitor<Literal> for Interpreter{
                 } else if let (Literal::StringLiteral(x), Literal::StringLiteral(y)) = (&left, &right){
                     return Ok(Literal::StringLiteral(format!("{}{}", x, y)))
                 } else {
-                    let mut err : ScannerError = ScannerError { is_error: false };
-                    ScannerError::run_time_error(&mut err, &expression.operator, "Operands must be two numbers or two strings.".to_string());
+                    let err : ScannerError = ScannerError { is_error: false };
+                    self.error.run_time_error(&expression.operator, "Operands must be two numbers or two strings.".to_string());
                     return Err(err);
                 }
             }
