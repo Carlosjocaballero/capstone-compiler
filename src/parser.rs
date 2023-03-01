@@ -135,7 +135,7 @@ impl Parser {
 			self.call()
 		}
 	}
-	fn finishCall(&mut self, callee:Box<Expr>){
+	fn finishCall(&mut self, callee:Box<Expr>)->Box<Expr>{
 		let mut arguments = ArrayList::new();
 		if !self.check(TokenType::RightParen){
 			while self.matching(&vec![tokenType::RightParen]){
@@ -149,7 +149,7 @@ impl Parser {
 		let mut _expr = self.primary();
 		loop{
 			if(self.matching(&vec![TokenType::LeftParen])){
-				_expr = finishCall(_expr);
+				_expr = self.finishCall(_expr);
 			}
 			else{
 				break;
