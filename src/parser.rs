@@ -1,8 +1,6 @@
 use crate::token::*;
 use crate::expr::*;
 use crate::LoxError::*;
-extern crate arraylist;
-use arraylist::arl::ArrayList;
 
 pub struct Parser {
 	pub tokens: Vec<Token>,
@@ -138,14 +136,22 @@ impl Parser {
 		}
 	}
 	fn finishCall(&mut self, callee:Box<Expr>)->Box<Expr>{
-		let mut arguments = ArrayList::new();
+		let mut arguments = Vec::new();
 		if !self.check(TokenType::RightParen){
-			while self.matching(&vec![tokenType::RightParen]){
-				arguments.add(self.expression());
+			while self.matching(&vec![TokenType::RightParen]){
+				if arguments.len() >= 255 {
+					self.parser_error.error(peek(), "Can't have more than 255 arguments.".to_string());
+				}
+				arguments.push(self.expression());
 			}
 		}
-		let paren = self.consume(TokenType::RightParen, "Expect ')' after arguments.");
-		return Box::new(Expr::Call())
+		let _paren = self.consume(TokenType::RightParen, "Expect ')' after arguments.");
+		let _expr = Box::new(Expr::Call(CallingExpr { 
+			left: callee,
+			operator: _paren,
+			right: arguments
+		}));
+		_expr
 	}
 	fn call(&mut self) -> Box<Expr>{
 		let mut _expr = self.primary();

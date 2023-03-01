@@ -4,6 +4,7 @@ use crate::token::*;
 #[derive(Clone)]
 pub enum Expr {
     Binary(BinaryExpr),
+    Call(CallingExpr),
     Grouping(GroupingExpr),
     Literal(LiteralExpr),
     Unary(UnaryExpr),
@@ -13,18 +14,24 @@ impl Expr {
     pub fn accept<T>(&self, expr_visitor: &mut dyn ExprVisitor<T>) -> Result<T, ScannerError> {
         match self {
             Expr::Binary(v) => v.accept(expr_visitor), 
+            Expr::Call(v) => v.accept(expr_visitor),
             Expr::Grouping(v) => v.accept(expr_visitor), 
             Expr::Literal(v) => v.accept(expr_visitor), 
-            Expr::Unary(v) => v.accept(expr_visitor), 
+            Expr::Unary(v) => v.accept(expr_visitor),
         }
     }
 }
-
 #[derive(Clone)]
 pub struct BinaryExpr {
     pub left: Box<Expr>,
     pub operator: Token,
     pub right: Box<Expr>,
+}
+#[derive(Clone)]
+pub struct CallingExpr{
+    pub left: Box<Expr>,
+    pub operator: Token,
+    pub right: Vec<Box<Expr>>,
 }
 
 #[derive(Clone)]
@@ -46,6 +53,7 @@ pub struct UnaryExpr {
 pub trait ExprVisitor<T> {
     fn visit_binary_expr(&mut self, expr: &BinaryExpr) -> Result<T, ScannerError>;
     fn visit_grouping_expr(&mut self, expr: &GroupingExpr) -> Result<T, ScannerError>;
+    fn visit_calling_expr(&mut self, expr: &CallingExpr) -> Result<T, ScannerError>;
     fn visit_literal_expr(&mut self, expr: &LiteralExpr) -> Result<T, ScannerError>;
     fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Result<T, ScannerError>;
 }
@@ -59,6 +67,11 @@ impl BinaryExpr {
 impl GroupingExpr {
     pub fn accept<T>(&self, visitor: &mut dyn ExprVisitor<T>) -> Result<T, ScannerError> {
         visitor.visit_grouping_expr(self)
+    }
+}
+impl CallingExpr {
+    pub fn accept<T>(&self, visitor: &mut dyn ExprVisitor<T>) -> Result<T, ScannerError> {
+        visitor.visit_calling_expr(self)
     }
 }
 
