@@ -132,7 +132,7 @@ impl Parser {
 			}));
 			unaryExpr
 		} else {
-			self.primary()
+			self.call()
 		}
 	}
 	fn call(&mut self) -> Box<Expr>{
