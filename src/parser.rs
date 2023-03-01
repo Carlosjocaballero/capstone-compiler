@@ -135,6 +135,18 @@ impl Parser {
 			self.primary()
 		}
 	}
+	fn call(&mut self) -> Box<Expr>{
+		let mut _expr = self.primary();
+		loop{
+			if(self.matching(&vec![TokenType::LeftParen])){
+				_expr = finishCall(_expr);
+			}
+			else{
+				break;
+			}
+		}
+		_expr
+	}
 
 	fn primary(&mut self) -> Box<Expr> {
 		if self.matching(&vec![TokenType::False]) { 
