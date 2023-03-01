@@ -1,6 +1,8 @@
 use crate::token::*;
 use crate::expr::*;
 use crate::LoxError::*;
+extern crate arraylist;
+use arraylist::arl::ArrayList;
 
 pub struct Parser {
 	pub tokens: Vec<Token>,
