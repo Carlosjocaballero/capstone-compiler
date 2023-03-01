@@ -135,6 +135,16 @@ impl Parser {
 			self.call()
 		}
 	}
+	fn finishCall(&mut self, callee:Box<Expr>){
+		let mut arguments = ArrayList::new();
+		if !self.check(TokenType::RightParen){
+			while self.matching(&vec![tokenType::RightParen]){
+				arguments.add(self.expression());
+			}
+		}
+		let paren = self.consume(TokenType::RightParen, "Expect ')' after arguments.");
+		return Box::new(Expr::Call())
+	}
 	fn call(&mut self) -> Box<Expr>{
 		let mut _expr = self.primary();
 		loop{
