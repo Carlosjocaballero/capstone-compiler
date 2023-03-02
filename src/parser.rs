@@ -140,7 +140,7 @@ impl Parser {
 		if !self.check(TokenType::RightParen){
 			while self.matching(&vec![TokenType::RightParen]){
 				if arguments.len() >= 255 {
-					self.parser_error.error(self.peek(), "Can't have more than 255 arguments.".to_string());
+					self.parser_error.error(&self.peek(), "Can't have more than 255 arguments.".to_string());
 				}
 				arguments.push(self.expression());
 			}

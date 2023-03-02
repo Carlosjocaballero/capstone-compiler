@@ -33,7 +33,7 @@ Professor says can eval to StringLiteral, float, bool, nil
 // }
 
 
-pub struct Interpreter{ pub error: InterpreterError}
+pub struct Interpreter{ pub error: InterpreterError, pub globals: }
 
 impl Interpreter{
     pub fn interpret(&mut self, expression: &Box<Expr>){
@@ -187,6 +187,26 @@ impl ExprVisitor<Literal> for Interpreter{
             _ => return Err(ScannerError { is_error: true })
         }
     }
+    fn visit_calling_expr(&mut self, expression: &CallingExpr) -> Result<Literal, ScannerError> {
+        let callee = self.evaluate(expr.callee);
+    
+        let arguments = Vec::new();
+        for argument in Box::Expr::argument { 
+          arguments.push(self.evaluate(argument));
+        }
+        if (!(callee instanceof LoxCallable)) {
+            throw!self.RuntimeError(expr.paren,
+                "Can only call functions and classes.");
+        }
+        let function = callee;
+        if (arguments.len() != function.arity()) {
+            throw new RuntimeError(expr.paren, "Expected " +
+                function.arity() + " arguments but got " +
+                arguments.size() + ".");
+        }      
+        return function.call(self, arguments);
+      }
+
 }
 
 trait StringUtils{
