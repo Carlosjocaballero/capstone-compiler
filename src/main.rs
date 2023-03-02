@@ -1,5 +1,4 @@
-use std::{env, hash::Hash};
-use std::collections::HashMap;
+use std::env;
 use std::io;
 use std::io::Write;
 use std::fs;
@@ -13,7 +12,7 @@ mod ast_printer;
 mod parser;
 pub mod LoxError;
 
-use expr::{Expr, BinaryExpr, UnaryExpr, LiteralExpr};
+use expr::Expr;
 use LoxError::*;
 use token::*;
 use crate::scanner::Scanner;
@@ -60,16 +59,17 @@ fn run(source: String){
     let mut scanner: Scanner = Scanner::new(source);
     
     scanner.scan_tokens();
-    println!("{:?}", scanner.tokens);
+    // println!("{:?}", scanner.tokens);
 
     let mut parser = Parser{
         tokens: scanner.tokens,
-        current: 0
+        current: 0,
+        parser_error: ParseError { is_error: false }
     };
 
     let expression: Box<Expr> = parser.parse();
     
-    let printer= crate::ast_printer::AstPrinter{};
+    let mut printer= crate::ast_printer::AstPrinter{};
 
     let tree_string: String = match printer.print(&expression){
         Ok(x) => x,
@@ -79,8 +79,9 @@ fn run(source: String){
     println!("{}", tree_string);
 
 
-    let interpreter = interpreter::Interpreter{};
-    interpreter.interpret(&expression); 
+    let mut interpreter = interpreter::Interpreter{error: InterpreterError { is_error: false }};
+    interpreter.interpret(&expression);
+    if interpreter.error.is_error == true {std::process::exit(70);}
 
     // //----------- Expr for TESTING PURPOSES --------------
     // //generate_ast(&"src".to_string());
