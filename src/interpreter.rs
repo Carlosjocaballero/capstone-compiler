@@ -195,8 +195,8 @@ impl ExprVisitor<Literal> for Interpreter{
           arguments.push(self.evaluate(argument));
         }
         if (!(callee instanceof LoxCallable)) {
-            throw!self.RuntimeError(expr.paren,
-                "Can only call functions and classes.");
+            throw!(self.RuntimeError(expr.paren,
+                "Can only call functions and classes."));
         }
         let function = callee;
         if arguments.len() != function.arity() {
