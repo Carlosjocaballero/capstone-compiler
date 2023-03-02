@@ -199,10 +199,10 @@ impl ExprVisitor<Literal> for Interpreter{
                 "Can only call functions and classes.");
         }
         let function = callee;
-        if (arguments.len() != function.arity()) {
-            throw new RuntimeError(expr.paren, "Expected " +
+        if arguments.len() != function.arity() {
+            throw!(RuntimeError(expr.paren, "Expected " +
                 function.arity() + " arguments but got " +
-                arguments.size() + ".");
+                arguments.size() + "."));
         }      
         return function.call(self, arguments);
       }
