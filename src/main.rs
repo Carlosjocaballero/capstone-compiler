@@ -8,15 +8,18 @@ mod token;
 mod interpreter;
 mod scanner;
 mod expr;
+mod stmt;
 mod generate_ast;
 mod ast_printer;
 mod parser;
 pub mod LoxError;
 
 use expr::{Expr, BinaryExpr, UnaryExpr, LiteralExpr};
+use stmt::{ExpressionStmt, PrintStmt};
 use LoxError::*;
 use token::*;
 use crate::scanner::Scanner;
+use crate::stmt::Stmt;
 use generate_ast::*;
 use parser::*;
 
@@ -45,6 +48,7 @@ fn run_file(path: &String){
 
 // Opens up the REPL
 fn run_prompt(){
+    // generate_ast(&"src".to_string());
     loop{
         print!(">> ");
         io::stdout().flush().unwrap();
@@ -68,6 +72,8 @@ fn run(source: String){
     };
 
     let expression: Box<Expr> = parser.parse();
+
+    let statements: Box<Stmt> = parser.parse();
     
     let printer= crate::ast_printer::AstPrinter{};
 
@@ -80,7 +86,7 @@ fn run(source: String){
 
 
     let interpreter = interpreter::Interpreter{};
-    interpreter.interpret(&expression); 
+    interpreter.interpret(&statements); 
 
     // //----------- Expr for TESTING PURPOSES --------------
     // //generate_ast(&"src".to_string());

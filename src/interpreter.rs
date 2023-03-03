@@ -8,10 +8,13 @@ For the functions that aren't in ExprVisitor... need to separate it because it's
 expression::* doesn't work. says: use of undeclared crate or module `expression`
  */
 
-use std::any::{Any, TypeId}; //May not need this, may use Option<Object> instead
+use std::any::{Any, TypeId}; use std::env;
+//May not need this, may use Option<Object> instead
 use std::fmt::Debug;
 use std::option::Option;
 use crate::scanner::Scanner;
+use crate::stmt::{Stmt, ExpressionStmt, PrintStmt, self};
+use crate::{env::*, expr};
 use crate::{token::*, LoxError};
 use crate::expr::*;
 use crate::LoxError::*;
@@ -50,10 +53,16 @@ Professor says can eval to StringLiteral, float, bool, nil
 pub struct Interpreter{}
 
 impl Interpreter{
-    pub fn interpret(&self, expression: &Box<Expr>){
-        let value = self.evaluate(&expression);
-        if let Ok(value) = value{
-        println!("{}", self.stringify(&value))
+    pub fn interpret(&self, statements: &Box<Stmt>){
+        // let value = self.evaluate(&expression);
+        // if let Ok(value) = value{
+        // println!("{}", self.stringify(&value))
+        // }
+        let environment = env::new();
+        for statement in statements {
+            if let Err(error) = self.execute(statement) {
+                Box::run_time_error(error);
+            }
         }
     }
 
@@ -104,6 +113,51 @@ impl Interpreter{
         return expression.accept(self)
     }
 
+    fn execute(&self, stmt: Stmt) -> Result<(), RuntimeError> {
+        stmt.accept(&self);
+    }
+
+    fn execute_block(&mut self, statements: &[Stmt], environment: &mut Environment) {
+        let previous = self.environment.close();
+        self.environment = Rc::new(RefCell::new(environment.clone()));
+        for statement in statements {
+            self.execute(statement);
+        }
+        self.environment = previous;
+    }
+
+    fn visit_block_stmt(&mut self, stmt: &Stmt::Block) -> Result<(), RuntimeError> {
+        let environment = Environment::new_enclosed(&self.environment);
+        self.execute_block(&stmt.statements, environment)?;
+        Ok(())
+    }
+
+    fn visit_expression_stmt(&self, stmt: ExpressionStmt) {
+        self.evaluate(&stmt.expression);
+        None;
+    }
+
+    fn visit_print_stmt(&self, stmt: PrintStmt) {
+        let value = self.evaluate(&stmt.expression);
+        print!("{}", stringify!(value));
+        None;
+    }
+
+    fn visit_var_stmt(&mut self, stmt: &Stmt::Var) -> Result<(), RuntimeError> {
+        let value = match &stmt.initializer {
+            Some(expr) => self.evaluate(expr)?,
+            None => Expr::Nil,
+        };
+        self.environment.define_env(stmt.name.lexeme.clone(), value);
+        Ok(())
+    }
+
+    fn visit_assign_expr(&mut self, expr: &Expr::Assign) -> Result<Object, RuntimeError> {
+        let value = self.evaluate(&*expr.value)?;
+        self.environment.assign(&expr.name, value.clone())?;
+        Ok(value)
+    }
+
 }
 
 impl ExprVisitor<Literal> for Interpreter{
@@ -138,6 +192,11 @@ impl ExprVisitor<Literal> for Interpreter{
             _ => return Ok(Literal::None)
         };
         //Unreachable
+    }
+
+    fn visit_variable_expr(&mut self, expr: &Expr::Variable) -> Result<Object, RuntimeError> {
+        let name = &expr.name.lexeme;
+        self.environment.get(name)
     }
 
     fn visit_grouping_expr(&self, expression: &GroupingExpr) -> Result<Literal, ScannerError>{
@@ -205,6 +264,10 @@ impl ExprVisitor<Literal> for Interpreter{
             },
             _ => return Err(ScannerError { is_error: true })
         }
+    }
+
+    fn visit_clone_expr(&self, expr: &CloneExpr) -> Result<Literal, ScannerError> {
+        todo!()
     }
 }
 
