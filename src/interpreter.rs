@@ -188,7 +188,7 @@ impl ExprVisitor<Literal> for Interpreter{
         }
     }
     fn visit_calling_expr(&mut self, expression: &CallingExpr) -> Result<Literal, ScannerError> {
-        let callee = self.evaluate(expr.callee);
+        let callee = self.evaluate(expression.callee);
     
         let arguments = Vec::new();
         for argument in Box::Expr::argument { 
