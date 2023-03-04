@@ -53,16 +53,13 @@ Professor says can eval to StringLiteral, float, bool, nil
 pub struct Interpreter{}
 
 impl Interpreter{
-    pub fn interpret(&self, statements: &Box<Stmt>){
+    pub fn interpret(&self, statements: Vec<Box<Stmt>>){
         // let value = self.evaluate(&expression);
         // if let Ok(value) = value{
         // println!("{}", self.stringify(&value))
         // }
-        let environment = env::new();
-        for statement in statements {
-            if let Err(error) = self.execute(statement) {
-                Box::run_time_error(error);
-            }
+        for statement in statements{
+            self.execute(statement)
         }
     }
 
@@ -113,8 +110,8 @@ impl Interpreter{
         return expression.accept(self)
     }
 
-    fn execute(&self, stmt: Stmt) -> Result<(), RuntimeError> {
-        stmt.accept(&self);
+    fn execute(&self, stmt: Stmt) {
+        stmt.accept(self);
     }
 
     fn execute_block(&mut self, statements: &[Stmt], environment: &mut Environment) {
@@ -138,8 +135,10 @@ impl Interpreter{
     }
 
     fn visit_print_stmt(&self, stmt: PrintStmt) {
-        let value = self.evaluate(&stmt.expression);
-        print!("{}", stringify!(value));
+        match self.evaluate(&stmt.expression){
+            Ok() => println!("{}", self.stringify(stmt.expression)),
+            Err(_) => None
+        }
         None;
     }
 

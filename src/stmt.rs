@@ -23,7 +23,7 @@ pub struct PrintStmt {
     pub expression: Box<Stmt>,
 }
 
-pub trait ExprVisitor<T> {
+pub trait StmtVisitor<T> {
     fn visit_expression_stmt(&self, expr: &ExpressionStmt) -> Result<T, ScannerError>;
     fn visit_print_stmt(&self, expr: &PrintStmt) -> Result<T, ScannerError>;
 }

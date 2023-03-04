@@ -11,11 +11,11 @@ pub struct Parser {
 }
 
 impl Parser {
-	pub fn parse(&mut self) -> Box<Stmt> {
+	pub fn parse(&mut self) -> Vec<Box<Stmt>> {
 		let mut statements = Vec::new();
 		while !self.isAtEnd() {
 			statements.push(self.statement());
-			statements.add(self.declaration());
+			//statements.add(self.declaration());
 		}
 		statements
 	}
@@ -43,21 +43,20 @@ impl Parser {
 	}
 
 	fn statement(&mut self) -> Box<Stmt> {
-		if self.matching(Print) {
-			self.print_statement();
-		} else {
-			self.expression_statement();
-		}
-
-		if self.matching(TokenType::LeftBrace) {
-			return Stmt::Block(self.block()?);
-		}
+		if self.matching(&vec![TokenType::Print]) {
+			return self.print_statement();
+		}			
+		return self.expression_statement();
+		// if self.matching(TokenType::LeftBrace) {
+		// 	return Stmt::Block(self.block()?);
+		// }
 	}
 
 	fn print_statement(&mut self) -> Box<Stmt> {
-		let value = &self.expression();
-		self.consume(Semicolon, "Expect ';' after value. ");
+		let value: Box<Expr> = self.expression();
+		self.consume(TokenType::Semicolon, "Expect ';' after value. ");
 		Stmt::Print(value)
+		//////////////////////////////////////////////////////////////////////////////////////////
 	}
 
 	fn var_declaration(&mut self) -> Box<Stmt> {
@@ -72,8 +71,8 @@ impl Parser {
 	}
 
 	fn expression_statement(&mut self) -> Box<Stmt> {
-		let expr = &self.expression();
-		self.consume(Semicolon, "Expect ';' after expression. ");
+		let expr: Box<Expr> = self.expression();
+		self.consume(TokenType::Semicolon, "Expect ';' after expression. ");
 		Stmt::Expression(expr)
 	}
 
