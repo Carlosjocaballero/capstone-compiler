@@ -3,11 +3,12 @@ use std::string::ParseError;
 use crate::token::*;
 use crate::expr::*;
 use crate::stmt::*;
+use crate::LoxError::*;
 
 pub struct Parser {
 	pub tokens: Vec<Token>,
 	pub current: usize,
-	// pub extends: ParseError // Edit 3.
+	pub parser_error: ParseError // Edit 3.
 }
 
 impl Parser {
@@ -130,20 +131,21 @@ impl Parser {
 		false
 	}
 	
-	fn consume(&mut self, tokenType: TokenType, message:&str) -> Token { 
-		// for tokenType in tokenTypes {
-		if self.check(tokenType) { self.advance() }
+	fn consume(&mut self, token_types: TokenType, message:&str) -> Token { 
+		// for token_types in token_typess {
+		if self.check(token_types) { self.advance(); }
 		// }
-		else { self.advance() }		// placeholder return, need to return error
-		// throw!(self.error(self.peek(), message));
+		let peek = &self.peek();
+		self.parser_error.error(peek, message.to_string());
+		panic!()
 	}
 
-	fn check(&mut self, tokenType: TokenType) -> bool {
+	fn check(&mut self, token_types: TokenType) -> bool {
 		if self.isAtEnd() { 
 			false 
 		} else {
 			let temp_token_type = self.peek()._type;
-			return temp_token_type == tokenType; 
+			return temp_token_type == token_types; 
 		}
 	}
 
@@ -256,26 +258,12 @@ impl Parser {
 			let literalExpr = Box::new(Expr::Literal(LiteralExpr {
 				value: Some(Literal::None)
 			}));
+			let peek = self.peek();
+			self.parser_error.error(&peek, "Expect expression.".to_string());
 			literalExpr
 		}
 	}
 
-	// fn error(&mut self, tokenType: TokenType, message:&str) -> ParseError {
-	// 	Lox.error(token, message);
-	// 	return new ParseError();
-	// }
-
-	// fn error(&mut self, tokenType: TokenType, message: &str) { // Edit 2
-	// 	for tokenType in tokenTypes {
-	// 		let temp_token = self.tokens;
-	// 		if temp_token == TokenType::Eof {
-	// 	  	self.report(token.line, " at end", message);
-	// 		} else {
-	// 			self.report(token.line, " at '" + token.lexeme + "'", message);
-	// 		}
-	// 	}
-	// }
-	  
 	fn synchronize(&mut self) { // edit 4.
 		self.advance();
 	
