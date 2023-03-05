@@ -11,15 +11,15 @@ mod stmt;
 mod generate_ast;
 mod ast_printer;
 mod parser;
+mod environment;
 pub mod LoxError;
 
-use expr::{Expr, BinaryExpr, UnaryExpr, LiteralExpr};
-use stmt::*;
+
 use LoxError::*;
-use token::*;
+
+use crate::environment::Environment;
 use crate::scanner::Scanner;
 use crate::stmt::Stmt;
-use generate_ast::*;
 use parser::*;
 
 fn main(){
@@ -71,22 +71,27 @@ fn run(source: String){
         parser_error: ParseError { is_error: false }
     };
 
-    let expression: Box<Expr> = parser.parse();
+    // let expression: Box<Expr> = parser.parse();
 
     let statements: Vec<Box<Stmt>> = parser.parse();
+
+    // println!("{:?}", statements);
     
-    let mut printer= crate::ast_printer::AstPrinter{};
+    // let mut printer= crate::ast_printer::AstPrinter{};
 
-    let tree_string: String = match printer.print(&expression){
-        Ok(x) => x,
-        _ => String::from("Coudn't print tree")
+    // let tree_string: String = match printer.print(&expression){
+    //     Ok(x) => x,
+    //     _ => String::from("Coudn't print tree")
+    // };
+
+    // println!("{}", tree_string);
+
+
+    let mut interpreter = interpreter::Interpreter{
+        environment: Environment::new(),
+        error: InterpreterError { is_error: false }
     };
-
-    println!("{}", tree_string);
-
-
-    let mut interpreter = interpreter::Interpreter{error: InterpreterError { is_error: false }};
-    interpreter.interpret(&expression);
+    interpreter.interpret(statements);
     if interpreter.error.is_error == true {std::process::exit(70);}
 
     // //----------- Expr for TESTING PURPOSES --------------

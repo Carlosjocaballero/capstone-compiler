@@ -13,11 +13,13 @@ use std::any::{Any, TypeId}; use std::env;
 use std::fmt::Debug;
 use std::option::Option;
 use crate::scanner::Scanner;
-use crate::stmt::{Stmt, ExpressionStmt, PrintStmt, self};
+use environment::*;
+use crate::stmt::*;
 use crate::{env::*, expr};
 use crate::{token::*, LoxError};
 use crate::expr::*;
 use crate::LoxError::*;
+use crate::environment;
 
 /*
 The value can either be from the enum Literal (which is in token.rs) -> string, f64
@@ -50,21 +52,24 @@ Professor says can eval to StringLiteral, float, bool, nil
 // }
 
 
-pub struct Interpreter{ pub error: InterpreterError}
+pub struct Interpreter{
+    pub environment: Environment,
+    pub error: InterpreterError
+}
 
 impl Interpreter{
-    pub fn interpret(&self, statements: Vec<Box<Stmt>>){
+    pub fn interpret(&mut self, statements: Vec<Box<Stmt>>){
         // let value = self.evaluate(&expression);
         // if let Ok(value) = value{
         // println!("{}", self.stringify(&value))
         // }
         for statement in statements{
-            self.execute(statement)
+            self.execute(*statement)
         }
     }
 
     fn stringify(&self, expression: &Literal) -> String{
-        if expression == &Literal::None {return "nill".to_string()};
+        if expression == &Literal::None {return "nil".to_string()};
         if let Literal::Number(_num) = expression{
             let mut text : String = expression.to_string();
             if text.ends_with(".0") {
@@ -106,52 +111,67 @@ impl Interpreter{
         return expression.accept(self)
     }
 
-    fn execute(&self, stmt: Stmt) {
+    fn execute(&mut self, mut stmt: Stmt) {
         stmt.accept(self);
     }
 
-    fn execute_block(&mut self, statements: &[Stmt], environment: &mut Environment) {
-        let previous = self.environment.close();
-        self.environment = Rc::new(RefCell::new(environment.clone()));
-        for statement in statements {
-            self.execute(statement);
+    fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Environment) {
+        let previous : Environment = self.environment.clone();
+
+        self.environment = environment;
+
+        for stmt in statement{
+            self.execute(*stmt.clone())
         }
+
         self.environment = previous;
     }
 
-    fn visit_block_stmt(&mut self, stmt: &Stmt::Block) -> Result<(), RuntimeError> {
-        let environment = Environment::new_enclosed(&self.environment);
-        self.execute_block(&stmt.statements, environment)?;
-        Ok(())
+    // fn visit_block_stmt(&mut self, stmt: &Stmt::Block) -> Result<(), RuntimeError> {
+    //     let environment = Environment::new_enclosed(&self.environment);
+    //     self.execute_block(&stmt.statements, environment)?;
+    //     Ok(())
+    // }
+
+
+
+
+
+
+}
+
+impl StmtVisitor<Literal> for Interpreter{
+    fn visit_expression_stmt(&mut self, stmt: &ExpressionStmt) -> Result<Literal, ScannerError> {
+        self.evaluate(&stmt.expression)
     }
 
-    fn visit_expression_stmt(&self, stmt: ExpressionStmt) {
-        self.evaluate(&stmt.expression);
-        None;
-    }
-
-    fn visit_print_stmt(&self, stmt: PrintStmt) {
+    fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Result<Literal, ScannerError> {
         match self.evaluate(&stmt.expression){
-            Ok() => println!("{}", self.stringify(stmt.expression)),
-            Err(_) => None
+            Ok(value) => println!("{}", self.stringify(&value)),
+            Err(_) => ()
         }
-        None;
+        return Ok(Literal::None);
     }
 
-    fn visit_var_stmt(&mut self, stmt: &Stmt::Var) -> Result<(), RuntimeError> {
-        let value = match &stmt.initializer {
-            Some(expr) => self.evaluate(expr)?,
-            None => Expr::Nil,
-        };
-        self.environment.define_env(stmt.name.lexeme.clone(), value);
-        Ok(())
+    fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
+        let mut value : Literal = Literal::None;
+        if *stmt.initializer != Expr::None{
+            match self.evaluate(&stmt.initializer){
+                Ok(val) => value = val,
+                Err(_) => ()
+            }
+        }
+        self.environment.define(stmt.name.lexeme.clone(), value);
+        Ok(Literal::None)
     }
 
-    fn visit_assign_expr(&mut self, expr: &Expr::Assign) -> Result<Object, RuntimeError> {
-        let value = self.evaluate(&*expr.value)?;
-        self.environment.assign(&expr.name, value.clone())?;
-        Ok(value)
+    fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Result<Literal, ScannerError> {
+        let new_environment = Environment::new_enclosed(self.environment.clone());
+        self.execute_block(&expr.statements, new_environment);
+        return Ok(Literal::None)
     }
+
+    
 
 }
 
@@ -188,12 +208,11 @@ impl ExprVisitor<Literal> for Interpreter{
         //Unreachable
     }
 
-    fn visit_variable_expr(&mut self, expr: &Expr::Variable) -> Result<Object, RuntimeError> {
-        let name = &expr.name.lexeme;
-        self.environment.get(name)
+    fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<Literal, ScannerError>{
+        return Ok(self.environment.get(&expr.name));
     }
 
-    fn visit_grouping_expr(&self, expression: &GroupingExpr) -> Result<Literal, ScannerError>{
+    fn visit_grouping_expr(&mut self, expression: &GroupingExpr) -> Result<Literal, ScannerError>{
         match self.evaluate(&expression.expression){
             Ok(x) => Ok(x),
             Err(_) => Ok(Literal::None),
@@ -260,8 +279,18 @@ impl ExprVisitor<Literal> for Interpreter{
         }
     }
 
-    fn visit_clone_expr(&self, expr: &CloneExpr) -> Result<Literal, ScannerError> {
+    fn visit_clone_expr(&mut self, expr: &CloneExpr) -> Result<Literal, ScannerError> {
         todo!()
+    }
+
+    fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<Literal, ScannerError>{
+        let value = match self.evaluate(&expr.value){
+            Ok(val) => val,
+            Err(_) => Literal::None
+        };
+
+        self.environment.assign(expr.name.clone(), &value);
+        return Ok(value);
     }
 }
 

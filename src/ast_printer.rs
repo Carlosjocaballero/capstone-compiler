@@ -36,4 +36,16 @@ impl ExprVisitor<String> for AstPrinter {
     fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Result<String, ScannerError> {
         self.parenthesize(&expr.operator.lexeme, &[&expr.right]) 
     }
+
+    fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<String, ScannerError> {
+        Ok("".to_string())
+    }
+
+    fn visit_clone_expr(&mut self, expr: &CloneExpr) -> Result<String, ScannerError> {
+        Ok("".to_string())
+    }
+
+    fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<String, ScannerError> {
+        Ok("".to_string())
+    }
 }

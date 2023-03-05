@@ -1,1 +1,12 @@
-3 + 4 - 4 * 3
+var a = "global";
+{
+    print a; // Undefined;
+    var b = "inner";
+    {
+        print b; // Undefined;
+        var c = "hello";
+    }
+    print b; // "inner"
+    print c; // undefined
+}
+print a; // global
