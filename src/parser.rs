@@ -264,17 +264,16 @@ impl Parser {
 		let temp_token_type = self.previous()._type;
 		  if temp_token_type == TokenType::Semicolon { return };
 		  match self.peek()._type {
-			Class => (),
-			FUN => (),
-			VAR => (),
-			FOR => (),
-			IF => (),
-			WHILE => (),
-			PRINT => (),
-			RETURN => return
+			TokenType::Class => (),
+			TokenType::Fun => (),
+			TokenType::Var => (),
+			TokenType::For => (),
+			TokenType::If => (),
+			TokenType::While => (),
+			TokenType::Print => (),
+			TokenType::Return => return,
+			_ => {self.advance(); ()}
 		  };
-		  self.advance();
-
 		}
 		self.parser_error.is_error = false;
 	}
