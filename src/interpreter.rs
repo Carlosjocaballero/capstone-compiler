@@ -1,6 +1,25 @@
-use crate::token::*;
+// Need to do something so that I can check the type of the variable
+// What's left: Runtime errors
+
+/*
+Running file errors:
+For the functions that aren't in ExprVisitor... need to separate it because it's not a part of the trait
+
+expression::* doesn't work. says: use of undeclared crate or module `expression`
+ */
+
+use std::any::{Any, TypeId}; use std::env;
+//May not need this, may use Option<Object> instead
+use std::fmt::Debug;
+use std::option::Option;
+use crate::scanner::Scanner;
+use environment::*;
+use crate::stmt::*;
+use crate::{env::*, expr};
+use crate::{token::*, LoxError};
 use crate::expr::*;
 use crate::LoxError::*;
+use crate::environment;
 
 /*
 The value can either be from the enum Literal (which is in token.rs) -> string, f64
@@ -33,18 +52,24 @@ Professor says can eval to StringLiteral, float, bool, nil
 // }
 
 
-pub struct Interpreter{ pub error: InterpreterError}
+pub struct Interpreter{
+    pub environment: Environment,
+    pub error: InterpreterError
+}
 
 impl Interpreter{
-    pub fn interpret(&mut self, expression: &Box<Expr>){
-        let value = self.evaluate(&expression);
-        if let Ok(value) = value{
-        println!("{}", self.stringify(&value))
+    pub fn interpret(&mut self, statements: Vec<Box<Stmt>>){
+        // let value = self.evaluate(&expression);
+        // if let Ok(value) = value{
+        // println!("{}", self.stringify(&value))
+        // }
+        for statement in statements{
+            self.execute(*statement)
         }
     }
 
     fn stringify(&self, expression: &Literal) -> String{
-        if expression == &Literal::None {return "nill".to_string()};
+        if expression == &Literal::None {return "nil".to_string()};
         if let Literal::Number(_num) = expression{
             let mut text : String = expression.to_string();
             if text.ends_with(".0") {
@@ -86,6 +111,68 @@ impl Interpreter{
         return expression.accept(self)
     }
 
+    fn execute(&mut self, mut stmt: Stmt) {
+        stmt.accept(self);
+    }
+
+    fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Environment) {
+        let previous : Environment = self.environment.clone();
+
+        self.environment = environment;
+
+        for stmt in statement{
+            self.execute(*stmt.clone())
+        }
+
+        self.environment = previous;
+    }
+
+    // fn visit_block_stmt(&mut self, stmt: &Stmt::Block) -> Result<(), RuntimeError> {
+    //     let environment = Environment::new_enclosed(&self.environment);
+    //     self.execute_block(&stmt.statements, environment)?;
+    //     Ok(())
+    // }
+
+
+
+
+
+
+}
+
+impl StmtVisitor<Literal> for Interpreter{
+    fn visit_expression_stmt(&mut self, stmt: &ExpressionStmt) -> Result<Literal, ScannerError> {
+        self.evaluate(&stmt.expression)
+    }
+
+    fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Result<Literal, ScannerError> {
+        match self.evaluate(&stmt.expression){
+            Ok(value) => println!("{}", self.stringify(&value)),
+            Err(_) => ()
+        }
+        return Ok(Literal::None);
+    }
+
+    fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
+        let mut value : Literal = Literal::None;
+        if *stmt.initializer != Expr::None{
+            match self.evaluate(&stmt.initializer){
+                Ok(val) => value = val,
+                Err(_) => ()
+            }
+        }
+        self.environment.define(stmt.name.lexeme.clone(), value);
+        Ok(Literal::None)
+    }
+
+    fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Result<Literal, ScannerError> {
+        let new_environment = Environment::new_enclosed(self.environment.clone());
+        self.execute_block(&expr.statements, new_environment);
+        return Ok(Literal::None)
+    }
+
+    
+
 }
 
 impl ExprVisitor<Literal> for Interpreter{
@@ -119,6 +206,10 @@ impl ExprVisitor<Literal> for Interpreter{
             _ => return Ok(Literal::None)
         };
         //Unreachable
+    }
+
+    fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<Literal, ScannerError>{
+        return Ok(self.environment.get(&expr.name));
     }
 
     fn visit_grouping_expr(&mut self, expression: &GroupingExpr) -> Result<Literal, ScannerError>{
@@ -186,6 +277,20 @@ impl ExprVisitor<Literal> for Interpreter{
             },
             _ => return Err(ScannerError { is_error: true })
         }
+    }
+
+    fn visit_clone_expr(&mut self, expr: &CloneExpr) -> Result<Literal, ScannerError> {
+        todo!()
+    }
+
+    fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<Literal, ScannerError>{
+        let value = match self.evaluate(&expr.value){
+            Ok(val) => val,
+            Err(_) => Literal::None
+        };
+
+        self.environment.assign(expr.name.clone(), &value);
+        return Ok(value);
     }
 }
 
