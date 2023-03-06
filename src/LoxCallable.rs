@@ -6,5 +6,6 @@ pub struct LoxCallable{
 
 }
 impl LoxCallable{
-    pub fn call(Interpreter:Interpreter, arguments:Vec<object::Literal>);
+    pub fn call(interpreter:Interpreter, arguments:Vec<object::Literal>);
+    pub fn arity()->Number;
 }
