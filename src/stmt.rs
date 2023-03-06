@@ -8,6 +8,7 @@ pub enum Stmt {
     Print(PrintStmt),
     Var(VarStmt),
     Block(BlockStmt),
+    If(IfStmt),
 }
 
 impl Stmt {
@@ -16,7 +17,8 @@ impl Stmt {
             Stmt::Expression(v) => v.accept(stmt_visitor), 
             Stmt::Print(v) => v.accept(stmt_visitor),
             Stmt::Var(v) => v.accept(stmt_visitor),
-            Stmt::Block(v) => v.accept(stmt_visitor)
+            Stmt::Block(v) => v.accept(stmt_visitor),
+            Stmt::If(v) => v.accept(stmt_visitor),
         }
     }
 }
@@ -42,11 +44,17 @@ pub struct BlockStmt{
     pub statements : Vec<Box<Stmt>>
 }
 
+#[derive(Clone, Debug)]
+pub struct IfStmt {
+    pub expression: Box<Expr>,
+}
+
 pub trait StmtVisitor<T> {
     fn visit_expression_stmt(&mut self, expr: &ExpressionStmt) -> Result<T, ScannerError>;
     fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Result<T, ScannerError>;
     fn visit_var_stmt(&mut self, expr: &VarStmt) -> Result<T, ScannerError>;
     fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Result<T, ScannerError>;
+    fn visit_if_stmt(&mut self, expr: &IfStmt) -> Result<T, ScannerError>;
 }
 
 impl ExpressionStmt {
@@ -70,6 +78,12 @@ impl VarStmt{
 impl BlockStmt{
     pub fn accept<T>(&mut self, visitor: &mut dyn StmtVisitor<T>) -> Result<T, ScannerError> {
         visitor.visit_block_stmt(self)
+    }
+}
+
+impl IfStmt{
+    pub fn accept<T>(&mut self, visitor: &mut dyn StmtVisitor<T>) -> Result<T, ScannerError> {
+        visitor.visit_if_stmt(self)
     }
 }
 
