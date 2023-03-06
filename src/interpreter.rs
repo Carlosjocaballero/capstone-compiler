@@ -85,7 +85,7 @@ expression::* doesn't work. says: use of undeclared crate or module `expression`
          }
      }
  
-     fn is_truthy(&self, object: Literal) -> bool{
+     fn is_truthy(&mut self, object: Literal) -> bool{
          match object{
              Literal::None => false,
              Literal::Bool(x) => x,
@@ -139,10 +139,14 @@ expression::* doesn't work. says: use of undeclared crate or module `expression`
      }
 
     fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<Literal, ScannerError> {
-        if self.is_truthy(self.evaluate(&stmt.condition)?) {
-            self.execute(stmt.then_branch)?;
+        let x = match self.evaluate(&stmt.condition){
+            Ok(x) => x,
+            Err(_) => Literal::None
+        };
+        if self.is_truthy(x) {
+            self.execute(*stmt.then_branch.clone());
         } else if let Some(ref else_branch) = stmt.else_branch {
-            self.execute(else_branch)?;
+            self.execute(*else_branch.clone());
         }
         Ok(Literal::None)    
     }
