@@ -53,9 +53,9 @@ impl Parser {
 		let condition: Box<Expr> = self.expression();
 		self.consume(TokenType::RightParen, "Expect ')' after 'if'.");
 
-		let then_branch = Box::new(self.statement());
+		let then_branch = (self.statement());
 		let else_branch = if self.matching(&vec![TokenType::Else]) {
-            Some(Box::new(self.statement()))
+            Some((self.statement()))
         } else {
             None
         };

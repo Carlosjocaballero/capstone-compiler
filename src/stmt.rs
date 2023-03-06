@@ -46,7 +46,9 @@ pub struct BlockStmt{
 
 #[derive(Clone, Debug)]
 pub struct IfStmt {
-    pub expression: Box<Expr>,
+    pub condition: Box<Expr>,
+    pub then_branch: Box<Stmt>,
+    pub else_branch: Option<Box<Stmt>>
 }
 
 pub trait StmtVisitor<T> {
@@ -86,4 +88,5 @@ impl IfStmt{
         visitor.visit_if_stmt(self)
     }
 }
+
 
