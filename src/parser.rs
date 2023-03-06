@@ -98,11 +98,9 @@ impl Parser {
 
 	fn equality(&mut self) -> Box<Expr> {
 		let mut _expr: Box<Expr> = self.comparison();
-		//let mut binaryExpr: Box<Expr> = _expr.clone();
 		while self.matching(&vec![TokenType::BangEqual, TokenType::EqualEqual]) {
 			let _operator: Token = self.previous();
 			let _right: Box<Expr> = self.comparison();
-			// expr = new Expr.Binary(expr, operator, right); 
 			_expr = Box::new(Expr::Binary(BinaryExpr { 
 				left: _expr.clone(),
 				operator: _operator,
@@ -123,9 +121,7 @@ impl Parser {
 	}
 	
 	fn consume(&mut self, token_types: TokenType, message:&str) -> Token { 
-		// for token_types in token_typess {
 		if self.check(token_types) { return self.advance(); }
-		// }
 		let peek = &self.peek();
 		self.parser_error.error(peek, message.to_string());
 		Token { _type: TokenType::Nil, lexeme: "".to_string(), literal: Literal::None, line: 0 }
@@ -214,6 +210,7 @@ impl Parser {
 			self.call()
 		}
 	}
+
 	fn finishCall(&mut self, callee:Box<Expr>)->Box<Expr>{
 		let mut arguments = Vec::new();
 		if !self.check(TokenType::RightParen){
@@ -232,6 +229,7 @@ impl Parser {
 		}));
 		_expr
 	}
+
 	fn call(&mut self) -> Box<Expr>{
 		let mut _expr = self.primary();
 		loop{
