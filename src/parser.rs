@@ -1,5 +1,6 @@
 use crate::token::*;
 use crate::expr::*;
+use crate::stmt::*;
 use crate::LoxError::*;
 
 pub struct Parser {
@@ -9,12 +10,90 @@ pub struct Parser {
 }
 
 impl Parser {
-	pub fn parse(&mut self) -> Box<Expr> {
-		self.expression()
+	pub fn parse(&mut self) -> Vec<Box<Stmt>> {
+		let mut statements = Vec::new();
+		while !self.isAtEnd() {
+			statements.push(self.declaration());
+		}
+		statements
 	}
 
 	fn expression(&mut self) -> Box<Expr> {
-		self.equality()
+		return self.assignment();
+	}
+
+	fn declaration(&mut self) -> Box<Stmt> {
+		///////////////////////////////////////////////////////////
+		/////////////   NEEDS CHECKING IF CORRECT /////////////////
+		if self.parser_error.is_error == true {self.synchronize()};
+		///////////////////////////////////////////////////////////
+		
+
+		if self.matching(&vec![TokenType::Var]){
+			return self.var_declaration();
+		}
+		return self.statement();
+	}
+
+	fn statement(&mut self) -> Box<Stmt> {
+		if self.matching(&vec![TokenType::Print]) {
+			return self.print_statement();
+		}
+		if self.matching(&vec![TokenType::LeftBrace]) {
+			return Box::new(Stmt::Block(BlockStmt { statements: self.block() }));
+		}
+		return self.expression_statement();
+	}
+
+	fn print_statement(&mut self) -> Box<Stmt> {
+		let value: Box<Expr> = self.expression();
+		self.consume(TokenType::Semicolon, "Expect ';' after value. ");
+		Box::new(Stmt::Print(PrintStmt { expression: value }))
+	}
+
+	fn var_declaration(&mut self) -> Box<Stmt> {
+		let name: Token = self.consume(TokenType::Identifier, "Expect variable name.");
+		let mut initializer : Box<Expr> = Box::new(Expr::Literal(LiteralExpr { value: Some(Literal::None) }));
+		if self.matching(&vec![TokenType::Equal]) {
+			initializer = self.expression();
+		}
+
+		self.consume(TokenType::Semicolon, "Expect ';' after varibale declaraton.");
+		return Box::new(Stmt::Var(VarStmt { name: name, initializer: initializer }));
+	}
+
+	fn expression_statement(&mut self) -> Box<Stmt> {
+		let expr: Box<Expr> = self.expression();
+		self.consume(TokenType::Semicolon, "Expect ';' after expression. ");
+		Box::new(Stmt::Expression(ExpressionStmt { expression: expr }))
+	}
+
+	fn block(&mut self) -> Vec<Box<Stmt>> {
+		let mut statements = Vec::new();
+
+		while !self.check(TokenType::RightBrace) && !self.isAtEnd() {
+			statements.push(self.declaration());
+		}
+
+		self.consume(TokenType::RightBrace, "Expect '}' after block.");
+		statements
+	}
+
+	fn assignment(&mut self) -> Box<Expr>{
+		let expr = self.equality();
+
+		if self.matching(&vec![TokenType::Equal]){
+			let equals : Token = self.previous();
+			let value : Box<Expr> = self.assignment();
+		///////////////////////////////////////////////////////////////////////////////////////////////
+			if let Expr::Variable(x) = *expr{
+				return Box::new(Expr::Assign(AssignExpr { name: x.name, value: value }))
+			}
+
+			self.parser_error.error(&equals, "Invalid assignment target.".to_string())
+		}
+
+		return expr;
 	}
 
 	fn equality(&mut self) -> Box<Expr> {
@@ -45,11 +124,11 @@ impl Parser {
 	
 	fn consume(&mut self, token_types: TokenType, message:&str) -> Token { 
 		// for token_types in token_typess {
-		if self.check(token_types) { self.advance(); }
+		if self.check(token_types) { return self.advance(); }
 		// }
 		let peek = &self.peek();
 		self.parser_error.error(peek, message.to_string());
-		panic!()
+		Token { _type: TokenType::Nil, lexeme: "".to_string(), literal: Literal::None, line: 0 }
 	}
 
 	fn check(&mut self, token_types: TokenType) -> bool {
@@ -157,7 +236,11 @@ impl Parser {
 				value: Some(self.previous().literal)
 			}));
 			literalExpr
-		} else if self.matching(&vec![TokenType::LeftParen]) {
+		} else if self.matching(&vec![TokenType::Identifier]) {
+			let varExpr = Box::new(Expr::Variable(VariableExpr { name: self.previous() }));
+			varExpr
+		}
+		 else if self.matching(&vec![TokenType::LeftParen]) {
 			let expr: Box<Expr> = self.expression();
 			self.consume(TokenType::RightParen, "Expect ')' after expression.");
 			let groupingExpr = Box::new(Expr::Grouping(GroupingExpr {
@@ -181,16 +264,17 @@ impl Parser {
 		let temp_token_type = self.previous()._type;
 		  if temp_token_type == TokenType::Semicolon { return };
 		  match self.peek()._type {
-			Class => (),
-			FUN => (),
-			VAR => (),
-			FOR => (),
-			IF => (),
-			WHILE => (),
-			PRINT => (),
-			RETURN => return
+			TokenType::Class => (),
+			TokenType::Fun => (),
+			TokenType::Var => (),
+			TokenType::For => (),
+			TokenType::If => (),
+			TokenType::While => (),
+			TokenType::Print => (),
+			TokenType::Return => return,
+			_ => {self.advance(); ()}
 		  };
-		  self.advance();
 		}
+		self.parser_error.is_error = false;
 	}
 }

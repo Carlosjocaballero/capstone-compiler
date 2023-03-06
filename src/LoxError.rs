@@ -49,13 +49,15 @@ impl ParseError{
     }
 }
 
+#[derive(PartialEq, Clone)]
 pub struct InterpreterError{
     pub is_error: bool
 }
 
+
 impl InterpreterError{
     pub fn run_time_error(&mut self, operator: &Token, message: String){
-        println!("{} \n[line {}]", message, operator.line);
+        println!("[line {}] {}", operator.line, message);
         self.is_error = true;
     }
 }
