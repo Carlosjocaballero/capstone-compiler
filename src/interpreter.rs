@@ -141,6 +141,10 @@ impl Interpreter{
 }
 
 impl StmtVisitor<Literal> for Interpreter{
+    fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<Literal, ScannerError> {
+        Ok(())
+    }
+
     fn visit_expression_stmt(&mut self, stmt: &ExpressionStmt) -> Result<Literal, ScannerError> {
         self.evaluate(&stmt.expression)
     }
