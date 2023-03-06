@@ -211,8 +211,38 @@ impl Parser {
 			}));
 			unaryExpr
 		} else {
-			self.primary()
+			self.call()
 		}
+	}
+	fn finishCall(&mut self, callee:Box<Expr>)->Box<Expr>{
+		let mut arguments = Vec::new();
+		if !self.check(TokenType::RightParen){
+			while self.matching(&vec![TokenType::RightParen]){
+				if arguments.len() >= 255 {
+					self.parser_error.error(&self.peek(), "Can't have more than 255 arguments.".to_string());
+				}
+				arguments.push(self.expression());
+			}
+		}
+		let _paren = self.consume(TokenType::RightParen, "Expect ')' after arguments.");
+		let _expr = Box::new(Expr::Call(CallingExpr { 
+			left: callee,
+			operator: _paren,
+			right: arguments
+		}));
+		_expr
+	}
+	fn call(&mut self) -> Box<Expr>{
+		let mut _expr = self.primary();
+		loop{
+			if(self.matching(&vec![TokenType::LeftParen])){
+				_expr = self.finishCall(_expr);
+			}
+			else{
+				break;
+			}
+		}
+		_expr
 	}
 
 	fn primary(&mut self) -> Box<Expr> {

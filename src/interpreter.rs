@@ -278,20 +278,26 @@ impl ExprVisitor<Literal> for Interpreter{
             _ => return Err(ScannerError { is_error: true })
         }
     }
+    fn visit_calling_expr(&mut self, expression: &CallingExpr) -> Result<Literal, ScannerError> {
+        let callee = self.evaluate(expression.callee);
+    
+        let arguments = Vec::new();
+        for argument in Box::Expr::argument { 
+          arguments.push(self.evaluate(argument));
+        }
+        if (!(callee instanceof LoxCallable)) {
+            self.error.run_time_error(&expression.operator,
+                "Can only call functions and classes.".to_string())
+        }
+        let function = callee;
+        if arguments.len() != function.arity() {
+            self.error.run_time_error(&expression.operator, "Expected " +
+                function.arity() + " arguments but got " +
+                arguments.len() + ".".to_string());
+        }      
+        return function.call(self, arguments);
+      }
 
-    fn visit_clone_expr(&mut self, expr: &CloneExpr) -> Result<Literal, ScannerError> {
-        todo!()
-    }
-
-    fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<Literal, ScannerError>{
-        let value = match self.evaluate(&expr.value){
-            Ok(val) => val,
-            Err(_) => Literal::None
-        };
-
-        self.environment.assign(expr.name.clone(), &value);
-        return Ok(value);
-    }
 }
 
 trait StringUtils{

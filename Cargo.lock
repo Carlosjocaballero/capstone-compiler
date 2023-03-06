@@ -3,5 +3,13 @@
 version = 3
 
 [[package]]
+name = "arraylist"
+version = "0.1.5"
+source = "git+https://github.com/2teez/arraylist#219016cd6552f57a22559fb2253ff92046a041b6"
+
+[[package]]
 name = "lox"
 version = "0.1.0"
+dependencies = [
+ "arraylist",
+]

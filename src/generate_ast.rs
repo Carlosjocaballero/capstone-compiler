@@ -12,6 +12,7 @@ pub fn generate_ast(output_dir: &String) -> io::Result<()> {
     define_ast(output_dir, &"Expr".to_string(), &vec![
         "Assign   : Token name, Box<Expr> value".to_string(),
         "Binary   : Box<Expr> left, Token operator, Box<Expr> right".to_string(),
+        "Call     : Box<Expr> callee, Token paren, Box<Expr> arguments".to_string(),
         "Grouping : Box<Expr> expression".to_string(),
         "Literal  : Option<Literal> value".to_string(),
         "Unary    : Token operator, Box<Expr> right".to_string(),
