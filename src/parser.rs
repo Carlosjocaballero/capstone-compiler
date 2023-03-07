@@ -99,7 +99,7 @@ impl Parser {
 	}
 
 	fn assignment(&mut self) -> Box<Expr>{
-		let expr = self.equality();
+		let expr = self.or();
 
 		if self.matching(&vec![TokenType::Equal]){
 			let equals : Token = self.previous();
@@ -114,6 +114,32 @@ impl Parser {
 
 		return expr;
 	}
+
+	fn or(&mut self) -> Box<Expr> {
+		let mut _expr = self.and();
+	
+		while self.matching(&vec![TokenType::Or]) {
+			let operator = self.previous().clone();
+			let right = self.and();
+			_expr = Box::new(Expr::Logical(LogicalExpr {left: Box::new(_expr), operator, right: right}));
+		}
+	
+		_expr
+	}
+
+	fn and(&mut self) -> Box<Expr> {
+		let mut _expr = self.equality();
+	
+		while self.matching(&vec![TokenType::And]) {
+			let operator = self.previous();
+			let right = self.equality();
+			_expr = Box::new(Expr::Logical(LogicalExpr {left: Box::new(_expr), operator, right: right}));
+		}
+	
+		_expr
+	}
+	
+	
 
 	fn equality(&mut self) -> Box<Expr> {
 		let mut _expr: Box<Expr> = self.comparison();
