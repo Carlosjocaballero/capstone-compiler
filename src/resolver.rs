@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::hash::Hash;
 
+use crate::LoxError;
 use crate::expr::*;
 use crate::token::*;
 use crate::interpreter::*;
@@ -56,16 +58,36 @@ impl Resolver{
     fn define(&mut self, name: Token){
         if self.scopes.is_empty(){return;}
         
-        let value: HashMap<String, bool> = HashMap::from([(name.lexeme, true)]);
-        self.scopes.last().insert(&value);
+        let Some(top) = self.scopes.last();
+        top.insert(name.lexeme, true);
     }
+
+    /*
+    CAN'T DO THIS YET
+    fn resolveLocal(&self, expr: Expr, name: Token){
+        for scope in self.scopes{
+            if scope.contains_key(&name.lexeme){
+                self.interpreter.resolve(expr, self.scopes.len());
+                return;
+            }
+        }
+    }*/
 
 
 }
 
-/*impl ExprVisitor<Literal> for Resolver{
+impl ExprVisitor<Literal> for Resolver{
+    fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<Literal, ScannerError> {
+        let Some(top) = self.scopes.last();
+        if !self.scopes.is_empty() &&  top.get(&expr.name.lexeme) == false /*Boolean.FALSE*/{
+            ErrorTools::_error(self, expr.name, "Can't read local variable in its own initializer.".to_string());;
+        }
 
-}*/
+        //Can't do yet
+        /*self.resolveLocal(expr.name);*/
+        return Ok(Literal::None);
+    }
+}
 
 impl StmtVisitor<Literal> for Resolver{
     fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Result<Literal, ScannerError> {
