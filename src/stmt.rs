@@ -9,6 +9,7 @@ pub enum Stmt {
     Var(VarStmt),
     Block(BlockStmt),
     If(IfStmt),
+    While(WhileStmt)
 }
 
 impl Stmt {
@@ -19,6 +20,7 @@ impl Stmt {
             Stmt::Var(v) => v.accept(stmt_visitor),
             Stmt::Block(v) => v.accept(stmt_visitor),
             Stmt::If(v) => v.accept(stmt_visitor),
+            Stmt::While(v) => v.accept(stmt_visitor)
         }
     }
 }
@@ -51,12 +53,19 @@ pub struct IfStmt {
     pub else_branch: Option<Box<Stmt>>
 }
 
+#[derive(Clone, Debug)]
+pub struct WhileStmt{
+    pub condition: Box<Expr>,
+    pub body: Box<Stmt>
+}
+
 pub trait StmtVisitor<T> {
-    fn visit_expression_stmt(&mut self, expr: &ExpressionStmt) -> Result<T, ScannerError>;
-    fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Result<T, ScannerError>;
-    fn visit_var_stmt(&mut self, expr: &VarStmt) -> Result<T, ScannerError>;
-    fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Result<T, ScannerError>;
-    fn visit_if_stmt(&mut self, expr: &IfStmt) -> Result<T, ScannerError>;
+    fn visit_expression_stmt(&mut self, stmt: &ExpressionStmt) -> Result<T, ScannerError>;
+    fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Result<T, ScannerError>;
+    fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<T, ScannerError>;
+    fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<T, ScannerError>;
+    fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<T, ScannerError>;
+    fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Result<T, ScannerError>;
 }
 
 impl ExpressionStmt {
@@ -89,4 +98,9 @@ impl IfStmt{
     }
 }
 
+impl WhileStmt{
+    pub fn accept<T>(&mut self, visitor: &mut dyn StmtVisitor<T>) -> Result<T, ScannerError> {
+        visitor.visit_while_stmt(self)
+    }
+}
 

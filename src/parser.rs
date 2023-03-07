@@ -42,11 +42,16 @@ impl Parser {
 		if self.matching(&vec![TokenType::Print]) {
 			return self.print_statement();
 		}
+		if self.matching(&vec![TokenType::While]) {
+			return self.while_statement();
+		}
 		if self.matching(&vec![TokenType::LeftBrace]) {
 			return Box::new(Stmt::Block(BlockStmt { statements: self.block() }));
 		}
 		return self.expression_statement();
 	}
+
+
 
 	fn if_statement(&mut self) -> Box<Stmt> {
 		self.consume(TokenType::LeftParen, "Expect '(' after 'if'.");
@@ -79,6 +84,14 @@ impl Parser {
 
 		self.consume(TokenType::Semicolon, "Expect ';' after varibale declaraton.");
 		return Box::new(Stmt::Var(VarStmt { name: name, initializer: initializer }));
+	}
+	
+	fn while_statement(&mut self) -> Box<Stmt>{
+		self.consume(TokenType::LeftParen, "Expect '(' after 'while'.");
+		let condition: Box<Expr> =  self.expression();
+		self.consume(TokenType::RightParen, "Expect ')' after condition.");
+		let body: Box<Stmt> = self.statement();
+		return Box::new(Stmt::While(WhileStmt{condition: condition, body: body}));
 	}
 
 	fn expression_statement(&mut self) -> Box<Stmt> {
