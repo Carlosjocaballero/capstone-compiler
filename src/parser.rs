@@ -121,7 +121,7 @@ impl Parser {
 		while self.matching(&vec![TokenType::Or]) {
 			let operator = self.previous().clone();
 			let right = self.and();
-			_expr = Box::new(Expr::Logical(LogicalExpr {left: Box::new(_expr), operator, right: right}));
+			_expr = Box::new(Expr::Logical(LogicalExpr {left: _expr, operator, right: right}));
 		}
 	
 		_expr
@@ -133,7 +133,7 @@ impl Parser {
 		while self.matching(&vec![TokenType::And]) {
 			let operator = self.previous();
 			let right = self.equality();
-			_expr = Box::new(Expr::Logical(LogicalExpr {left: Box::new(_expr), operator, right: right}));
+			_expr = Box::new(Expr::Logical(LogicalExpr {left: _expr, operator, right: right}));
 		}
 	
 		_expr
