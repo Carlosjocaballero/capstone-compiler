@@ -188,7 +188,7 @@ expression::* doesn't work. says: use of undeclared crate or module `expression`
         ///////////////////CHECK IF LOOP WORKS////////////////
         //////////////////////////////////////////////////////
         while self.is_truthy(&eval_condition){
-            self.execute(*stmt.body);
+            self.execute((*stmt.body).clone());
             eval_condition = match self.evaluate(&stmt.condition){
                 Ok(literal) => literal,
                 Err(_) => Literal::None
