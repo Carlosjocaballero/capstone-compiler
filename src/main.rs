@@ -13,6 +13,7 @@ mod ast_printer;
 mod parser;
 mod resolver;
 mod environment;
+mod LoxCallable;
 pub mod LoxError;
 
 

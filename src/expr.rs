@@ -38,6 +38,14 @@ pub struct BinaryExpr {
     pub operator: Token,
     pub right: Box<Expr>,
 }
+
+#[derive(PartialEq, Clone, Debug)]
+pub struct CallingExpr {
+    pub callee: Box<Expr>,
+    pub operator: Token,
+    pub arguments: Vec<Box<Expr>>,
+}
+
 #[derive(PartialEq, Clone, Debug)]
 pub struct GroupingExpr {
     pub expression: Box<Expr>,
@@ -92,6 +100,7 @@ impl GroupingExpr {
         visitor.visit_grouping_expr(self)
     }
 }
+
 impl CallingExpr {
     pub fn accept<T>(&self, visitor: &mut dyn ExprVisitor<T>) -> Result<T, ScannerError> {
         visitor.visit_calling_expr(self)

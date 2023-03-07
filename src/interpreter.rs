@@ -278,20 +278,27 @@ impl ExprVisitor<Literal> for Interpreter{
             _ => return Err(ScannerError { is_error: true })
         }
     }
-    fn visit_calling_expr(&mut self, expression: &CallingExpr) -> Result<Literal, ScannerError> {
-        let callee = self.evaluate(expression.callee);
     
-        let arguments = Vec::new();
-        for argument in Box::Expr::argument { 
-          arguments.push(self.evaluate(argument));
+    fn visit_calling_expr(&mut self, expr: &CallingExpr) -> Result<Literal, ScannerError> {
+        let callee = match self.evaluate(&expr.callee) {
+            Ok(callee) => callee,
+            Err(_) => Literal::None
+        };
+    
+        let arguments: Vec<Literal>;
+        for argument in expr.arguments.iter() { 
+          arguments.push( match self.evaluate(argument){
+            Ok(arg) => arg,
+            Err(_) => Literal::None
+          });
         }
         if (!(callee instanceof LoxCallable)) {
-            self.error.run_time_error(&expression.operator,
+            self.error.run_time_error(&expr.operator,
                 "Can only call functions and classes.".to_string())
         }
         let function = callee;
         if arguments.len() != function.arity() {
-            self.error.run_time_error(&expression.operator, "Expected " +
+            self.error.run_time_error(&expr.operator, "Expected " +
                 function.arity() + " arguments but got " +
                 arguments.len() + ".".to_string());
         }      

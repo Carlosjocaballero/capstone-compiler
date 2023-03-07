@@ -120,7 +120,7 @@ impl Parser {
 		false
 	}
 	
-	fn consume(&mut self, token_types: TokenType, message:&str) -> Token { 
+	fn consume(&mut self, token_types: TokenType, message: &str) -> Token { 
 		if self.check(token_types) { return self.advance(); }
 		let peek = &self.peek();
 		self.parser_error.error(peek, message.to_string());
@@ -211,32 +211,33 @@ impl Parser {
 		}
 	}
 
-	fn finishCall(&mut self, callee:Box<Expr>)->Box<Expr>{
-		let mut arguments = Vec::new();
-		if !self.check(TokenType::RightParen){
-			while self.matching(&vec![TokenType::RightParen]){
-				if arguments.len() >= 255 {
+	fn finishCall(&mut self, callee: Box<Expr>) -> Box<Expr> {
+		let mut _arguments: Vec<Box<Expr>>;
+		if !self.check(TokenType::RightParen) {
+			while {		// do-while loop, all the contents are executed in the first {} 
+				if _arguments.len() >= 255 {
 					self.parser_error.error(&self.peek(), "Can't have more than 255 arguments.".to_string());
 				}
-				arguments.push(self.expression());
-			}
+				_arguments.push(self.expression());
+
+				self.matching(&vec![TokenType::Comma])		// while condition
+			} {}			// this second {} stays empty 
 		}
 		let _paren = self.consume(TokenType::RightParen, "Expect ')' after arguments.");
-		let _expr = Box::new(Expr::Call(CallingExpr { 
-			left: callee,
+		let mut _expr = Box::new(Expr::Call(CallingExpr { 
+			callee: callee,
 			operator: _paren,
-			right: arguments
+			arguments: _arguments
 		}));
 		_expr
 	}
 
-	fn call(&mut self) -> Box<Expr>{
+	fn call(&mut self) -> Box<Expr> {
 		let mut _expr = self.primary();
-		loop{
-			if(self.matching(&vec![TokenType::LeftParen])){
+		loop {
+			if self.matching(&vec![TokenType::LeftParen]) {
 				_expr = self.finishCall(_expr);
-			}
-			else{
+			} else {
 				break;
 			}
 		}
