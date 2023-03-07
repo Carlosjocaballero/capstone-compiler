@@ -8,7 +8,7 @@ use crate::LoxError::*;
 
 pub struct Resolver{
     pub interpreter: Interpreter,
-    pub scopes: Vec<HashMap<String, bool>>, //scopes is a stack of hashmaps
+    pub scopes: Vec<HashMap<String, bool>>, //scopes should be treated as a stack of hashmaps
 }
 
 impl Resolver{
@@ -16,16 +16,6 @@ impl Resolver{
         self.interpreter = interpreter;
     }
 
-    //can't do this yet
-    fn visitBlockStmt(&mut self) -> Literal{
-        Resolver::beginScope(self);
-        //Resolver::resolve(/*stmt.statements*/);
-        Resolver::endScope(self);
-
-        return Literal::None;
-    }
-
-    //Can't do these yet either
     fn resolve(statements: Vec<Stmt>){
         for statement in statements{
             resolve(statement);
