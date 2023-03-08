@@ -29,7 +29,7 @@ impl Resolver{
     of function overloading
      */
     fn resolve_stmts(&self, statements: Vec<Stmt>){
-        for statement in statements{
+        for statement in statements.iter(){
             self.resolve(statement);
         }
     }
@@ -41,6 +41,8 @@ impl Resolver{
     fn resolve_expr(&self, expr: Expr){
         expr.accept(self);
     }
+
+    //11.3.5 - resolveFunction(function: &FunctionStmt)
 
     fn beginScope(&mut self){
         let mut x: HashMap<String, bool> = HashMap :: new();
@@ -72,16 +74,15 @@ impl Resolver{
         top.insert(name.lexeme, true);
     }
 
-    /*
-    CAN'T DO THIS YET
+    /*CAN'T DO THIS YET */
     fn resolveLocal(&self, expr: Expr, name: Token){
-        for scope in self.scopes{
+        for (idx, scope) in self.scopes.iter().enumerate(){
             if scope.contains_key(&name.lexeme){
-                self.interpreter.resolve(expr, self.scopes.len());
+                /*self.interpreter.resolve(expr, self.scopes.len() - 1 - idx);*/
                 return;
             }
         }
-    }*/
+    }
 
 
 }
@@ -103,6 +104,30 @@ impl ExprVisitor<Literal> for Resolver{
         /*self.resolveLocal(expr, expr.name);*/
         return Ok(Literal::None);
     }
+
+    fn visit_binary_expr(&mut self, expr: &BinaryExpr) -> Result<Literal, ScannerError> {
+        self.resolve_expr(expr.left);
+        self.resolve_expr(expr.right);
+        return Ok(Literal::None);
+    }
+
+    //11.3.6 - visitCallExpr(expr: &CallExpr)
+
+    fn visit_grouping_expr(&mut self, expr: &GroupingExpr) -> Result<Literal, ScannerError> {
+        self.resolve_expr(expr.expression);
+        return Ok(Literal::None);
+    }
+
+    fn visit_literal_expr(&mut self, expr: &LiteralExpr) -> Result<Literal, ScannerError> {
+        return Ok(Literal::None);
+    }
+
+    //11.3.6 - visitLogicalExpr(expr: &LogicalExpr)
+
+    fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Result<Literal, ScannerError> {
+        self.resolve_expr(expr.right);
+        return Ok(Literal::None);
+    }
 }
 
 impl StmtVisitor<Literal> for Resolver{
@@ -114,6 +139,22 @@ impl StmtVisitor<Literal> for Resolver{
         return Ok(Literal::None);
     }
 
+    fn visit_expression_stmt(&mut self, expr: &ExpressionStmt) -> Result<Literal, ScannerError> {
+        self.resolve(expr.expression);
+        return Ok(Literal::None);
+    }
+
+    //11.3.5 - visitFunctionStmt(stmt: &FunctionStmt)
+    
+    //11.3.6 - visitIfStmt(stmt: &IfStmt)
+    
+    fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Result<Literal, ScannerError> {
+        self.resolve(expr.expression);
+        return Ok(Literal::None);
+    }
+
+    //11.3.6 - visitReturnStmt(stmt: &ReturnStmt)
+
     fn visit_var_stmt(&mut self, expr: &VarStmt) -> Result<Literal, ScannerError> {
         declare(expr.name);
         if expr.initializer != Literal::None{
@@ -123,4 +164,6 @@ impl StmtVisitor<Literal> for Resolver{
 
         return Ok(Literal::None);
     }
+
+    //11.3.6 - visitWhileStmt(stmt: &WhileStmt)
 }
