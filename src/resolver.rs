@@ -18,9 +18,19 @@ impl Resolver{
         self.interpreter = interpreter;
     }
 
-    fn resolve(statements: Vec<Stmt>){
+    /*
+    In book, resolve_stmts, resolve, and resolve_expr are all named resolve and are overloaded, however Rust does not
+    seem to have funtion overloading. 
+    
+    Considering making a trait for resolve but for now, renamed some of the functions
+    (resolve_stmts and resolve_expr) to handle this issue.
+
+    If need to call resolve functions without knowing what your calling resolve for, then will need to do some type 
+    of function overloading
+     */
+    fn resolve_stmts(&self, statements: Vec<Stmt>){
         for statement in statements{
-            resolve(statement);
+            self.resolve(statement);
         }
     }
 
@@ -28,7 +38,7 @@ impl Resolver{
         stmt.accept(self);
     }
 
-    fn resolve(&self, expr: Expr){
+    fn resolve_expr(&self, expr: Expr){
         expr.accept(self);
     }
 
@@ -87,12 +97,18 @@ impl ExprVisitor<Literal> for Resolver{
         /*self.resolveLocal(expr.name);*/
         return Ok(Literal::None);
     }
+
+    fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<Literal, ScannerError> {
+        self.resolve_expr(expr.name);
+        /*self.resolveLocal(expr, expr.name);*/
+        return Ok(Literal::None);
+    }
 }
 
 impl StmtVisitor<Literal> for Resolver{
     fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Result<Literal, ScannerError> {
         self.beginScope();
-        self.resolve(expr.statements);
+        self.resolve_stmts(expr.statements);
         self.endScope();
         
         return Ok(Literal::None);
