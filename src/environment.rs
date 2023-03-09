@@ -6,7 +6,7 @@ use crate::LoxError::*;
 #[derive(PartialEq, Clone)]
 pub struct Environment {
     pub enclosing: Option<Box<Environment>>,
-    values: HashMap<String, Literal>,
+    pub values: HashMap<String, Literal>,
     error: InterpreterError,
 }
 
@@ -21,7 +21,7 @@ impl Environment {
 
     pub fn new_enclosed(enclosing : Environment) -> Self{
         Environment { 
-            enclosing: enclosing.enclosing,
+            enclosing: Some(Box::new(enclosing)),
             values: HashMap::new(),
             error: InterpreterError { is_error: false } 
             }
@@ -39,20 +39,23 @@ impl Environment {
     }
 
     pub fn get(&mut self, name: &Token) -> Literal{
-        match self.values.get(&name.lexeme){
-            Some(value) => return value.clone(),
-            None => {
-                if self.enclosing != None{
-                    let mut x: Box<Environment> = Option::unwrap(self.enclosing.clone());
-                    return x.get(name)
-                }
-                self.error.run_time_error(name, format!("Undefined variable '{}'.", name.lexeme));
-                Literal::None
+        if self.values.contains_key(&name.lexeme){
+            return match self.values.get(&name.lexeme){
+                Some(x) => x.clone(),
+                None => Literal::None
             }
+        }
+        
+        if self.enclosing != None{
+            return Option::expect(self.enclosing.clone(), "").get(&name);
+        }
+        else{
+            panic!()
         }
     }
 
     pub fn assign(&mut self, name: Token, value: &Literal){
+        //println!("{:?}", self.values);
         if self.values.contains_key(&name.lexeme){
             self.values.insert(name.lexeme, value.clone());
             return;
@@ -65,6 +68,10 @@ impl Environment {
         }   
 
         self.error.run_time_error(&name, format!("Undefined variable '{}'.", name.lexeme));
+    }
+
+    pub fn print_map(&mut self){
+        println!("{:?}", self.values);
     }
 }
 

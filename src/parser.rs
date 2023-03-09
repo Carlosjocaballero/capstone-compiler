@@ -61,14 +61,14 @@ impl Parser {
 		let condition: Box<Expr> = self.expression();
 		self.consume(TokenType::RightParen, "Expect ')' after 'if'.");
 
-		let then_branch = (self.statement());
+		let then_branch = self.statement();
 		let else_branch = if self.matching(&vec![TokenType::Else]) {
-            Some((self.statement()))
+            Some(self.statement())
         } else {
             None
         };
 
-		return Box::new(Stmt::If(IfStmt { condition, then_branch, else_branch}))
+		return Box::new(Stmt::If(IfStmt { condition: condition, then_branch: then_branch, else_branch: else_branch}))
 
 	}
 
@@ -165,7 +165,7 @@ impl Parser {
 	}
 
 	fn assignment(&mut self) -> Box<Expr>{
-		let expr = self.or();
+		let expr = self.equality();
 
 		if self.matching(&vec![TokenType::Equal]){
 			let equals : Token = self.previous();

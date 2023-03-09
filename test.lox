@@ -1,12 +1,6 @@
-var a = "global";
-{
-    print a; // Undefined;
-    var b = "inner";
-    {
-        print b; // Undefined;
-        var c = "hello";
-    }
-    print b; // "inner"
-    print c; // undefined
+var a = "before";
+while(a == "before"){
+   a = "after";
 }
-print a; // global
+
+print a;
