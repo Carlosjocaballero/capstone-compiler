@@ -141,8 +141,14 @@ impl Parser {
 				 }))
 			}, 
 			body: body, 
-		}));	
+		}));
 
+		if let Some(initializer) = initializer {
+			body = Box::new(Stmt::Block(BlockStmt {
+				statements: vec![initializer, body],
+			}));
+		}		
+	
 		return body		
 
 	}
