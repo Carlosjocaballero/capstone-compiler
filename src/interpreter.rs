@@ -173,6 +173,14 @@ fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
     }
     self.environment.define(stmt.name.lexeme.clone(), value);
     Ok(Literal::None)
+
+    // let mut value: Option<Box<Expr>> = None;
+    // if let Some(initializer) = &stmt.initializer {
+    //     value = Some(Box::new((*initializer).clone()));
+    // }
+
+    // self.environment.define(stmt.name.lexeme.clone(), value);
+    // Ok(Literal::None)
 }
 
 fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<Literal, ScannerError> {

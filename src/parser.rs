@@ -15,7 +15,7 @@ impl Parser {
 		while !self.isAtEnd() {
 			statements.push(self.declaration());
 		}
-		statements
+		return statements
 	}
 
 	fn expression(&mut self) -> Box<Expr> {
@@ -141,8 +141,14 @@ impl Parser {
 				 }))
 			}, 
 			body: body, 
-		}));	
+		}));
 
+		if let Some(initializer) = initializer {
+			body = Box::new(Stmt::Block(BlockStmt {
+				statements: vec![initializer, body],
+			}));
+		}		
+	
 		return body		
 
 	}
