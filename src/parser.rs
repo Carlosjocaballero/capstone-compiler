@@ -165,7 +165,7 @@ impl Parser {
 	}
 
 	fn assignment(&mut self) -> Box<Expr>{
-		let expr = self.equality();
+		let expr = self.or();
 
 		if self.matching(&vec![TokenType::Equal]){
 			let equals : Token = self.previous();
@@ -348,6 +348,7 @@ impl Parser {
 			}));
 			literalExpr
 		} else if self.matching(&vec![TokenType::Identifier]) {
+			///println!("Parser:Primary():351\n{:?}", self.previous());
 			let varExpr = Box::new(Expr::Variable(VariableExpr { name: self.previous() }));
 			varExpr
 		}

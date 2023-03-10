@@ -19,10 +19,10 @@ impl Environment {
         }
     }
 
-    pub fn new_enclosed(enclosing : Environment) -> Self{
+    pub fn new_enclosed(enclosing : &Environment) -> Self{
         Environment { 
-            enclosing: Some(Box::new(enclosing)),
-            values: HashMap::new(),
+            enclosing: Some(Box::new(enclosing.clone())),
+            values: enclosing.values.clone(),
             error: InterpreterError { is_error: false } 
             }
     }
@@ -50,20 +50,23 @@ impl Environment {
             return Option::expect(self.enclosing.clone(), "").get(&name);
         }
         else{
+            println!{"environemnt.rs:get():53\n{:?}", self.values};
             panic!()
         }
     }
 
     pub fn assign(&mut self, name: Token, value: &Literal){
-        //println!("{:?}", self.values);
+        //println!("Environemnt:assign():59\nmap: {:?}\nvariable name: {:?}\nnew value: {:?}", self.values, name.lexeme,value);
         if self.values.contains_key(&name.lexeme){
             self.values.insert(name.lexeme, value.clone());
+            //self.print_map();
             return;
         }
 
         if self.enclosing != None {
             let mut x = Option::unwrap(self.enclosing.clone());
             x.assign(name, value);
+            //self.print_map();
             return;
         }   
 

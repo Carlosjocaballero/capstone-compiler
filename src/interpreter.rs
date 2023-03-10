@@ -110,6 +110,8 @@ impl Interpreter{
     }
 
     fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Environment) {
+        //println!("interpreter:execute_block():113");
+        //self.environment.print_map();
         let previous : Environment = self.environment.clone();
 
         self.environment = environment;
@@ -174,7 +176,9 @@ fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
 }
 
 fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<Literal, ScannerError> {
-    let new_environment = Environment::new_enclosed(self.environment.clone());
+    //self.environment.print_map();
+    let mut new_environment = Environment::new_enclosed(&self.environment);
+    //new_environment.print_map();
     self.execute_block(&stmt.statements, new_environment);
     return Ok(Literal::None)
 }
@@ -235,6 +239,8 @@ fn visit_unary_expr(&mut self, expression: &UnaryExpr) -> Result<Literal, Scanne
 }
 
 fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<Literal, ScannerError>{
+    println!("interpreter:visit_variable_expr():242");
+    self.environment.print_map();
     return Ok(self.environment.get(&expr.name));
 }
 
