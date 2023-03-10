@@ -13,7 +13,6 @@ pub enum Expr {
     Variable(VariableExpr),
     Assign(AssignExpr),
     Clone(CloneExpr),
-    None
 }
 
 impl Expr {

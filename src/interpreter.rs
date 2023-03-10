@@ -47,7 +47,7 @@ Professor says can eval to StringLiteral, float, bool, nil
 
 
 pub struct Interpreter{
-    pub environment: Environment,
+    pub environment: Box<Environment>,
     pub error: InterpreterError
 }
 
@@ -58,7 +58,7 @@ impl Interpreter{
         // println!("{}", self.stringify(&value))
         // }
         for statement in statements{
-            self.execute(*statement)
+            self.execute(statement)
         }
     }
 
@@ -105,21 +105,38 @@ impl Interpreter{
         return expression.accept(self)
     }
 
-    fn execute(&mut self, mut stmt: Stmt) {
+    fn execute(&mut self, mut stmt: Box<Stmt>) {
         stmt.accept(self);
     }
 
-    fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Environment) {
-        //println!("interpreter:execute_block():113");
-        //self.environment.print_map();
-        let previous : Environment = self.environment.clone();
+    fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Box<Environment>) {
+
+        let mut previous = self.environment.clone();
 
         self.environment = environment;
 
         for stmt in statement{
-            self.execute(*stmt.clone())
+            self.execute(stmt.clone())
         }
+        // println!("outter environment:");
+        // previous.print_map();
+        // println!("inner environment: ");
+        // self.environment.print_map();
 
+        // for (key,value) in previous.values.clone(){
+        //     if self.environment.values.contains_key(&key){
+        //         //println!("works!");
+        //         let new_value = match self.environment.values.get(&key){
+        //             Some(value) => value,
+        //             None => &Literal::None
+        //         };
+        //         previous.values.insert(key, new_value.clone());
+        //     }
+        // }
+
+        //println!("outter updated:");
+        //previous.print_map();
+        
         self.environment = previous;
     }
 
@@ -138,7 +155,8 @@ impl Interpreter{
 
 impl StmtVisitor<Literal> for Interpreter{
     fn visit_expression_stmt(&mut self, stmt: &ExpressionStmt) -> Result<Literal, ScannerError> {
-        self.evaluate(&stmt.expression)
+        self.evaluate(&stmt.expression);
+        return Ok(Literal::None);
     }
 
     fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<Literal, ScannerError> {
@@ -147,9 +165,9 @@ impl StmtVisitor<Literal> for Interpreter{
             Err(_) => Literal::None
         };
         if self.is_truthy(&x) {
-            self.execute(*stmt.then_branch.clone());
+            self.execute(stmt.then_branch.clone());
         } else if let Some(ref else_branch) = stmt.else_branch {
-            self.execute(*else_branch.clone());
+            self.execute(else_branch.clone());
         }
         Ok(Literal::None)    
     }
@@ -165,7 +183,7 @@ fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Result<Literal, ScannerError
 
 fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
     let mut value : Literal = Literal::None;
-    if *stmt.initializer != Expr::None{
+    if *stmt.initializer != Expr::Literal(LiteralExpr { value: Some(Literal::None) }){
         match self.evaluate(&stmt.initializer){
             Ok(val) => value = val,
             Err(_) => ()
@@ -173,20 +191,10 @@ fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
     }
     self.environment.define(stmt.name.lexeme.clone(), value);
     Ok(Literal::None)
-
-    // let mut value: Option<Box<Expr>> = None;
-    // if let Some(initializer) = &stmt.initializer {
-    //     value = Some(Box::new((*initializer).clone()));
-    // }
-
-    // self.environment.define(stmt.name.lexeme.clone(), value);
-    // Ok(Literal::None)
 }
 
 fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<Literal, ScannerError> {
-    //self.environment.print_map();
-    let mut new_environment = Environment::new_enclosed(&self.environment);
-    //new_environment.print_map();
+    let mut new_environment = Box::new(Environment::new_enclosed(&self.environment));
     self.execute_block(&stmt.statements, new_environment);
     return Ok(Literal::None)
 }
@@ -201,12 +209,11 @@ fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Result<Literal, ScannerError
     ///////////////////CHECK IF LOOP WORKS////////////////
     //////////////////////////////////////////////////////
     while self.is_truthy(&eval_condition){
-        self.execute((*stmt.body).clone());
+        self.execute(stmt.body.clone());
         eval_condition = match self.evaluate(&stmt.condition){
             Ok(literal) => literal,
             Err(_) => Literal::None
         };
-        println!("{}", eval_condition);
     }
     return Ok(Literal::None);
 }
@@ -247,8 +254,8 @@ fn visit_unary_expr(&mut self, expression: &UnaryExpr) -> Result<Literal, Scanne
 }
 
 fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<Literal, ScannerError>{
-    println!("interpreter:visit_variable_expr():242");
-    self.environment.print_map();
+    //println!("interpreter:visit_variable_expr():250");
+    //self.environment.print_map();
     return Ok(self.environment.get(&expr.name));
 }
 
@@ -328,9 +335,9 @@ fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<Literal, ScannerErr
         Ok(val) => val,
         Err(_) => Literal::None
     };
-    self.environment.print_map();
+    // self.environment.print_map();
     self.environment.assign(expr.name.clone(), &value);
-    self.environment.print_map();
+    // self.environment.print_map();
     return Ok(value);
 }
 

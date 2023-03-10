@@ -354,7 +354,7 @@ impl Parser {
 			}));
 			literalExpr
 		} else if self.matching(&vec![TokenType::Identifier]) {
-			///println!("Parser:Primary():351\n{:?}", self.previous());
+			//println!("Parser:Primary():351\n{:?}", self.previous());
 			let varExpr = Box::new(Expr::Variable(VariableExpr { name: self.previous() }));
 			varExpr
 		}

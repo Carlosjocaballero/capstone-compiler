@@ -88,7 +88,7 @@ fn run(source: String){
 
 
     let mut interpreter = interpreter::Interpreter{
-        environment: Environment::new(),
+        environment: Box::new(Environment::new()),
         error: InterpreterError { is_error: false }
     };
     interpreter.interpret(statements);
