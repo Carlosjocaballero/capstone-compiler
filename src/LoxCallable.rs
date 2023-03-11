@@ -1,18 +1,18 @@
 use crate::token::*;
 use crate::expr::*;
 use crate::interpreter::*;
-use crate::LoxError::*;
 
-pub struct LoxCallable {
-
+pub trait LoxCallable {
+    fn call(&self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Literal;
+    fn arity(&self) -> Literal;
 }
 
-impl LoxCallable {
-    pub fn call(interpreter: Interpreter, arguments: Vec<Literal>) -> Literal {
+impl LoxCallable for Literal {
+    fn call(&self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Literal {
         todo!()
     }
 
-    pub fn arity() -> Literal {
+    fn arity(&self) -> Literal {
         todo!()
     }
 }

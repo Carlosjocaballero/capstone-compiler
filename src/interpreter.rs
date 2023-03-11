@@ -328,19 +328,22 @@ impl ExprVisitor<Literal> for Interpreter{
     }
 
     fn visit_calling_expr(&mut self, expr: &CallingExpr) -> Result<Literal, ScannerError> {
-        let callee = match self.evaluate(&expr.callee){
+        // the match gets the literal from the self.evaluate()
+        let callee = match self.evaluate(&expr.callee) {
             Ok(literal) => literal,
             Err(_) => Literal::None
         };
 
-        let arguments: Vec<Literal> = Vec::new();
-        for arg in expr.arguments{
+        let mut arguments: Vec<Literal> = Vec::new();
+        for arg in &expr.arguments{
             arguments.push(match self.evaluate(&arg){
                 Ok(literal) => literal,
                 Err(_) => Literal::None
             });
         }
-        let function = callee;
+
+        // returns an Ok Result with the Literal from call() 
+        Ok(callee.call(self, arguments))
     }
 
     fn visit_clone_expr(&mut self, expr: &CloneExpr) -> Result<Literal, ScannerError> {
