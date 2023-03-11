@@ -329,11 +329,12 @@ impl Parser {
 	}
 
 	fn finishCall(&mut self, callee: Box<Expr>) -> Box<Expr> {
-		let mut _arguments: Vec<Box<Expr>>;
+		let mut _arguments: Vec<Box<Expr>> = Vec::new();
 		if !self.check(TokenType::RightParen) {
 			while {		// do-while loop, all the contents are executed in the first {} 
 				if _arguments.len() >= 255 {
-					self.parser_error.error(&self.peek(), "Can't have more than 255 arguments.".to_string());
+					let token = self.peek();
+					self.parser_error.error(&token, "Can't have more than 255 arguments.".to_string());
 				}
 				_arguments.push(self.expression());
 
