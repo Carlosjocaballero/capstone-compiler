@@ -6,7 +6,7 @@ use crate::LoxError::*;
 #[derive(PartialEq, Clone)]
 pub struct Environment {
     pub enclosing: Option<Box<Environment>>,
-    values: HashMap<String, Literal>,
+    pub values: HashMap<String, Literal>,
     error: InterpreterError,
 }
 
@@ -19,85 +19,63 @@ impl Environment {
         }
     }
 
-    pub fn new_enclosed(enclosing : Environment) -> Self{
+    pub fn new_enclosed(enclosing : &Environment) -> Self{
         Environment { 
-            enclosing: enclosing.enclosing,
-            values: HashMap::new(),
+            enclosing: Some(Box::new(enclosing.clone())),
+            values: enclosing.values.clone(),
             error: InterpreterError { is_error: false } 
             }
     }
-
-    // fn with_enclosing(enclosing: Rc<RefCell<Environment>>) -> Self {
-    //     Environment {
-    //         values: HashMap::new(),
-    //         enclosing: Some(enclosing),
-    //     }
-    // }
 
     pub fn define(&mut self, name: String, value: Literal){
         self.values.insert(name, value);
     }
 
     pub fn get(&mut self, name: &Token) -> Literal{
-        match self.values.get(&name.lexeme){
-            Some(value) => return value.clone(),
-            None => {
-                if self.enclosing != None{
-                    let mut x: Box<Environment> = Option::unwrap(self.enclosing.clone());
-                    return x.get(name)
-                }
-                self.error.run_time_error(name, format!("Undefined variable '{}'.", name.lexeme));
-                Literal::None
+        if self.values.contains_key(&name.lexeme){
+            return match self.values.get(&name.lexeme){
+                Some(x) => x.clone(),
+                None => Literal::None
             }
+        }
+        
+        if self.enclosing != None{
+            // return Option::expect(self.enclosing.clone(), "").get(&name);
+            match self.enclosing.clone(){
+                Some(mut x) => x.get(name),
+                None => Literal::None
+            }
+        }
+        else{
+            println!{"environemnt.rs:get():53\n{:?}", self.values};
+            panic!()
         }
     }
 
     pub fn assign(&mut self, name: Token, value: &Literal){
+        //println!("Environemnt:assign():56\nmap: {:?}\nvariable name: {:?}\nnew value: {:?}", self.values, name.lexeme,value);
         if self.values.contains_key(&name.lexeme){
-            self.values.insert(name.lexeme, value.clone());
+            self.values.insert(name.lexeme.clone(), value.clone());
+            //self.print_map();
             return;
         }
 
+        let name_copy = name.clone();
         if self.enclosing != None {
-            let mut x = Option::unwrap(self.enclosing.clone());
-            x.assign(name, value);
+            // let mut x = Option::unwrap(self.enclosing);
+            // x.assign(name, value);
+            // //self.print_map();
+            // return;
+            Option::expect(self.enclosing.clone(), "Couldn't assign").assign(name, value);
+            println!("environment:assign():70\n");
+            self.print_map();
             return;
         }   
 
-        self.error.run_time_error(&name, format!("Undefined variable '{}'.", name.lexeme));
+        self.error.run_time_error(&name_copy, format!("Undefined variable '{}'.", name_copy.lexeme));
+    }
+
+    pub fn print_map(&mut self){
+        println!("{:?}", self.values);
     }
 }
-
-// fn get(&self, name: &Token) -> Result<Object, RuntimeError> {
-//     match self.values.get(&name.lexeme) {
-//         Some(value) => Ok(value.clone()),
-//         None => Err(RuntimeError::new(
-//             name.clone(),
-//             format!("Undefined varable '{}'", name.lexeme)
-//         )),
-//     }
-//     if let Some(enclosing) = &self.enclosing {
-//         return enclosing.get(name);
-//     }
-// }
-
-// fn assign(&mut self, name: &Token, value: Object) -> Result<(), RuntimeError> {
-//     if self.values.contains_key(&name.lexeme) {
-//         self.values.insert(name.lexeme.clone(), value);
-//         Ok(())
-//     } else {
-//         Err(RuntimeError::new(
-//             name.clone(),
-//             format!("Undefined variable '{}'.", name.lexeme)
-//         ))
-//     }
-
-//     if let Some(enclosing) = &self.enclosing {
-//         enclosing.assign(name, value);
-//         return;
-//     }
-// }
-
-// fn define_env(&mut self, name: String, value: Literal) {
-//     self.values.insert(name, value);
-// }
