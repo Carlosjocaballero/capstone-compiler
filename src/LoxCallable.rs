@@ -4,7 +4,7 @@ use crate::interpreter::*;
 
 pub trait LoxCallable {
     fn call(&self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Literal;
-    fn arity(&self) -> Literal;
+    fn arity(&self) -> usize;
 }
 
 impl LoxCallable for Literal {
@@ -12,7 +12,7 @@ impl LoxCallable for Literal {
         todo!()
     }
 
-    fn arity(&self) -> Literal {
+    fn arity(&self) -> usize {
         todo!()
     }
 }

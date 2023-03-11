@@ -342,6 +342,11 @@ impl ExprVisitor<Literal> for Interpreter{
             });
         }
 
+        if arguments.len() != callee.arity() {
+            return Err(ScannerError { is_error: true });
+            // RuntimeError(expr.paren, "Expected " + function.arity() + " arguments but got " + arguments.size() + ".");
+        };
+
         // returns an Ok Result with the Literal from call() 
         Ok(callee.call(self, arguments))
     }
