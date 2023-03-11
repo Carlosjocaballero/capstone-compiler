@@ -174,50 +174,50 @@ impl StmtVisitor<Literal> for Interpreter{
     }
 
 
-fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Result<Literal, ScannerError> {
+    fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Result<Literal, ScannerError> {
         match self.evaluate(&stmt.expression){
             Ok(value) => println!("{}", self.stringify(&value)),
             Err(_) => ()
         }
         return Ok(Literal::None);
-}
-
-fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
-    let mut value : Literal = Literal::None;
-    if *stmt.initializer != Expr::Literal(LiteralExpr { value: Some(Literal::None) }){
-        match self.evaluate(&stmt.initializer){
-            Ok(val) => value = val,
-            Err(_) => ()
-        }
     }
-    self.environment.define(stmt.name.lexeme.clone(), value);
-    Ok(Literal::None)
-}
 
-fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<Literal, ScannerError> {
-    let mut new_environment = Box::new(Environment::new_enclosed(&self.environment));
-    self.execute_block(&stmt.statements, new_environment);
-    return Ok(Literal::None)
-}
+    fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
+        let mut value : Literal = Literal::None;
+        if *stmt.initializer != Expr::Literal(LiteralExpr { value: Some(Literal::None) }){
+            match self.evaluate(&stmt.initializer){
+                Ok(val) => value = val,
+                Err(_) => ()
+            }
+        }
+        self.environment.define(stmt.name.lexeme.clone(), value);
+        Ok(Literal::None)
+    }
 
-fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Result<Literal, ScannerError> {
-    let mut eval_condition = match self.evaluate(&stmt.condition){
-        Ok(literal) => literal,
-        Err(_) => Literal::None
-    };
+    fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<Literal, ScannerError> {
+        let mut new_environment = Box::new(Environment::new_enclosed(&self.environment));
+        self.execute_block(&stmt.statements, new_environment);
+        return Ok(Literal::None)
+    }
 
-    //////////////////////////////////////////////////////
-    ///////////////////CHECK IF LOOP WORKS////////////////
-    //////////////////////////////////////////////////////
-    while self.is_truthy(&eval_condition){
-        self.execute(stmt.body.clone());
-        eval_condition = match self.evaluate(&stmt.condition){
+    fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Result<Literal, ScannerError> {
+        let mut eval_condition = match self.evaluate(&stmt.condition){
             Ok(literal) => literal,
             Err(_) => Literal::None
         };
+
+        //////////////////////////////////////////////////////
+        ///////////////////CHECK IF LOOP WORKS////////////////
+        //////////////////////////////////////////////////////
+        while self.is_truthy(&eval_condition){
+            self.execute(stmt.body.clone());
+            eval_condition = match self.evaluate(&stmt.condition){
+                Ok(literal) => literal,
+                Err(_) => Literal::None
+            };
+        }
+        return Ok(Literal::None);
     }
-    return Ok(Literal::None);
-}
 
 }
 
