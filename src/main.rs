@@ -8,8 +8,8 @@ mod interpreter;
 mod scanner;
 mod expr;
 mod stmt;
-mod generate_ast;
-mod ast_printer;
+//mod generate_ast;
+//mod ast_printer;
 mod parser;
 mod resolver;
 mod environment;
@@ -90,7 +90,7 @@ fn run(source: String){
 
 
     let mut interpreter = interpreter::Interpreter{
-        environment: Environment::new(),
+        environment: Box::new(Environment::new()),
         error: InterpreterError { is_error: false }
     };
     interpreter.interpret(statements);

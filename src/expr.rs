@@ -9,11 +9,11 @@ pub enum Expr {
     Call(CallingExpr),
     Grouping(GroupingExpr),
     Literal(LiteralExpr),
+    Logical(LogicalExpr),
     Unary(UnaryExpr),
     Variable(VariableExpr),
     Assign(AssignExpr),
     Clone(CloneExpr),
-    None
 }
 
 impl Expr {
@@ -23,6 +23,7 @@ impl Expr {
             Expr::Call(v) => v.accept(expr_visitor),
             Expr::Grouping(v) => v.accept(expr_visitor), 
             Expr::Literal(v) => v.accept(expr_visitor), 
+            Expr::Logical(v) => v.accept(expr_visitor), 
             Expr::Unary(v) => v.accept(expr_visitor),
             Expr::Variable(v) => v.accept(expr_visitor),
             Expr::Assign(v) => v.accept(expr_visitor),
@@ -57,6 +58,13 @@ pub struct LiteralExpr {
 }
 
 #[derive(PartialEq, Clone, Debug)]
+pub struct LogicalExpr {
+    pub left: Box<Expr>,
+    pub operator: Token,
+    pub right: Box<Expr>,
+}
+
+#[derive(PartialEq, Clone, Debug)]
 pub struct UnaryExpr {
     pub operator: Token,
     pub right: Box<Expr>,
@@ -83,6 +91,7 @@ pub trait ExprVisitor<T> {
     fn visit_grouping_expr(&mut self, expr: &GroupingExpr) -> Result<T, ScannerError>;
     fn visit_calling_expr(&mut self, expr: &CallingExpr) -> Result<T, ScannerError>;
     fn visit_literal_expr(&mut self, expr: &LiteralExpr) -> Result<T, ScannerError>;
+    fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Result<T, ScannerError>;
     fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Result<T, ScannerError>;
     fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<T, ScannerError>;
     fn visit_clone_expr(&mut self, expr: &CloneExpr) -> Result<T, ScannerError>;
@@ -110,6 +119,12 @@ impl CallingExpr {
 impl LiteralExpr {
     pub fn accept<T>(&self, visitor: &mut dyn ExprVisitor<T>) -> Result<T, ScannerError> {
         visitor.visit_literal_expr(self)
+    }
+}
+
+impl LogicalExpr {
+    pub fn accept<T>(&self, visitor: &mut dyn ExprVisitor<T>) -> Result<T, ScannerError> {
+        visitor.visit_logical_expr(self)
     }
 }
 
