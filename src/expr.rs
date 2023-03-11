@@ -43,7 +43,7 @@ pub struct BinaryExpr {
 #[derive(PartialEq, Clone, Debug)]
 pub struct CallingExpr {
     pub callee: Box<Expr>,
-    pub operator: Token,
+    pub paren: Token,
     pub arguments: Vec<Box<Expr>>,
 }
 

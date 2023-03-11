@@ -343,7 +343,7 @@ impl Parser {
 		let _paren = self.consume(TokenType::RightParen, "Expect ')' after arguments.");
 		let mut _expr = Box::new(Expr::Call(CallingExpr { 
 			callee: callee,
-			operator: _paren,
+			paren: _paren,
 			arguments: _arguments
 		}));
 		_expr
