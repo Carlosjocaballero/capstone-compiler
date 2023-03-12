@@ -161,6 +161,9 @@ impl StmtVisitor<Literal> for Interpreter{
         self.evaluate(&stmt.expression);
         return Ok(Literal::None);
     }
+    fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Result<Literal, ScannerError> {
+        todo!()
+    }
 
     fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<Literal, ScannerError> {
         let x = match self.evaluate(&stmt.condition){
