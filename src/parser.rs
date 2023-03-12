@@ -170,9 +170,8 @@ impl Parser {
     	if !self.check(TokenType::RightParen) {
       		while {	// do while loop
         	if parameters.len() >= 255 {
-          	// error(self.peek(), "Can't have more than 255 parameters.");
+				self.parser_error.error(&self.peek(), "Can't have more than 255 parameters.".to_string());
         	}
-
         	parameters.push(self.consume(TokenType::Identifier, "Expect parameter name."));
 			
 			self.matching(&vec![TokenType::Comma])
