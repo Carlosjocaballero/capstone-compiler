@@ -1,3 +1,5 @@
+use std::string;
+
 use crate::token::*;
 use crate::expr::*;
 use crate::stmt::*;
@@ -29,7 +31,7 @@ impl Parser {
 		///////////////////////////////////////////////////////////
 		
 		if self.matching(&vec![TokenType::Fun]){
-			return self.function();
+			return self.function("Function".to_string());
 		}
 		if self.matching(&vec![TokenType::Var]){
 			return self.var_declaration();
@@ -162,26 +164,25 @@ impl Parser {
 	}
 
 	fn function(&mut self, kind: String) -> Box<Stmt> { // fix kind string
-    let name: Token = self.consume(TokenType::Identifier, "Expect " + kind + " name.");
-		self.consume(TokenType::LeftParen, "Expect '(' after " + kind + " name.");
-    let mut parameters: Vec<Token> = Vec::new();
-    if !self.check(TokenType::RightParen) {
-      while {	// do while loop
-        if parameters.len() >= 255 {
-          // error(self.peek(), "Can't have more than 255 parameters.");
-        }
+    	let name: Token = self.consume1(TokenType::Identifier, "Expect ".to_string() + &kind + &" name.".to_string());
+		self.consume1(TokenType::LeftParen, "Expect '(' after ".to_string() + &kind + &" name.".to_string());
+    	let mut parameters: Vec<Token> = Vec::new();
+    	if !self.check(TokenType::RightParen) {
+      		while {	// do while loop
+        	if parameters.len() >= 255 {
+          	// error(self.peek(), "Can't have more than 255 parameters.");
+        	}
 
-        parameters.push(self.consume(TokenType::Identifier, "Expect parameter name."));
+        	parameters.push(self.consume(TokenType::Identifier, "Expect parameter name."));
+			
+			self.matching(&vec![TokenType::Comma])
+      		} {} 
+    	}
+    	self.consume(TokenType::RightParen, "Expect ')' after parameters.");
 
-				self.matching(&vec![TokenType::Comma])
-      } {} 
-    }
-    self.consume(TokenType::RightParen, "Expect ')' after parameters.");
-
-		self.consume(TokenType::LeftBrace, "Expect '{' before " + kind + " body.");
-    let body: Vec<Box<Stmt>> = self.block();
-    // return Box<Stmt.Function(name, parameters, body)>; 
-		// ADD FUNCTION IN stmt.rs
+		self.consume1(TokenType::LeftBrace, "Expect '{' before ".to_string() + &kind + &" body.".to_string());
+    	let body: Vec<Box<Stmt>> = self.block();
+    	return Box::new(Stmt::Function(FunctionStmt { name: name, parameters: parameters, body: body}));
   }
 
 	fn block(&mut self) -> Vec<Box<Stmt>> {
@@ -266,6 +267,12 @@ impl Parser {
 		if self.check(token_types) { return self.advance(); }
 		let peek = &self.peek();
 		self.parser_error.error(peek, message.to_string());
+		Token { _type: TokenType::Nil, lexeme: "".to_string(), literal: Literal::None, line: 0 }
+	}
+	fn consume1(&mut self, token_types: TokenType, message: String) -> Token { 
+		if self.check(token_types) { return self.advance(); }
+		let peek = &self.peek();
+		self.parser_error.error(peek, message);
 		Token { _type: TokenType::Nil, lexeme: "".to_string(), literal: Literal::None, line: 0 }
 	}
 
