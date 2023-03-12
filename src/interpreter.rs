@@ -8,7 +8,8 @@ For the functions that aren't in ExprVisitor... need to separate it because it's
 expression::* doesn't work. says: use of undeclared crate or module `expression`
  */
 
-use std::any::{Any, TypeId}; use std::env;
+use std::any::{Any, TypeId}; use std::collections::HashMap;
+use std::env;
 //May not need this, may use Option<Object> instead
 use std::fmt::Debug;
 use std::option::Option;
@@ -51,7 +52,7 @@ Professor says can eval to StringLiteral, float, bool, nil
 //     Nil(Option<Box<Literal>>),
 // }
 
-
+#[derive(Clone)]
 pub struct Interpreter{
     pub environment: Environment,
     pub error: InterpreterError

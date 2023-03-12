@@ -61,3 +61,14 @@ impl InterpreterError{
         self.is_error = true;
     }
 }
+
+pub struct ResolverError{
+    pub is_error: bool
+}
+
+impl ResolverError{
+    pub fn error(&mut self, token: Token, message: String){
+        println!("[line {}] {}", token.line, message);
+        self.is_error = true;
+    }
+}

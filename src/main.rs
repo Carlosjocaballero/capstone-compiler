@@ -92,6 +92,11 @@ fn run(source: String){
         environment: Environment::new(),
         error: InterpreterError { is_error: false }
     };
+    let mut resoslver = resolver::Resolver{
+        interpreter: interpreter.clone(),
+        ..Default::default()
+    };
+    resoslver.resolve_stmts(&mut statements.clone());
     interpreter.interpret(statements);
     if interpreter.error.is_error == true {std::process::exit(70);}
 
