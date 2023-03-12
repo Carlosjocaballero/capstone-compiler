@@ -182,7 +182,7 @@ impl Parser {
 		self.consume1(TokenType::LeftBrace, "Expect '{' before ".to_string() + &kind + &" body.".to_string());
     	let body: Vec<Box<Stmt>> = self.block();
     	return Box::new(Stmt::Function(FunctionStmt { name: name, parameters: parameters, body: body}));
-  }
+  	}
 
 	fn block(&mut self) -> Vec<Box<Stmt>> {
 		let mut statements = Vec::new();
