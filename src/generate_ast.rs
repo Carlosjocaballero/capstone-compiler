@@ -22,6 +22,7 @@ pub fn generate_ast(output_dir: &String) -> io::Result<()> {
 
     define_ast(output_dir, &"Stmt".to_string(), &vec![
         "Expression : Box<Expr> expression".to_string(),
+        "Function   : Token name, Vec<Token> params," + " Vec<Stmt> body", // needs checking
         "If         : Box<Expr> expression, Box<Smt> then_branch, Option<Box<Stmt>> else_branch".to_string(),
         "Print      : Box<Expr> expression".to_string(),
     ])?;

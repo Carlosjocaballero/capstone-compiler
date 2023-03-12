@@ -28,7 +28,9 @@ impl Parser {
 		if self.parser_error.is_error == true {self.synchronize()};
 		///////////////////////////////////////////////////////////
 		
-
+		if self.matching(&vec![TokenType::Fun]){
+			return self.function();
+		}
 		if self.matching(&vec![TokenType::Var]){
 			return self.var_declaration();
 		}
@@ -158,6 +160,29 @@ impl Parser {
 		self.consume(TokenType::Semicolon, "Expect ';' after expression. ");
 		Box::new(Stmt::Expression(ExpressionStmt { expression: expr }))
 	}
+
+	fn function(&mut self, kind: String) -> Box<Stmt> { // fix kind string
+    let name: Token = self.consume(TokenType::Identifier, "Expect " + kind + " name.");
+		self.consume(TokenType::LeftParen, "Expect '(' after " + kind + " name.");
+    let mut parameters: Vec<Token> = Vec::new();
+    if !self.check(TokenType::RightParen) {
+      while {	// do while loop
+        if parameters.len() >= 255 {
+          // error(self.peek(), "Can't have more than 255 parameters.");
+        }
+
+        parameters.push(self.consume(TokenType::Identifier, "Expect parameter name."));
+
+				self.matching(&vec![TokenType::Comma])
+      } {} 
+    }
+    self.consume(TokenType::RightParen, "Expect ')' after parameters.");
+
+		self.consume(TokenType::LeftBrace, "Expect '{' before " + kind + " body.");
+    let body: Vec<Box<Stmt>> = self.block();
+    // return Box<Stmt.Function(name, parameters, body)>; 
+		// ADD FUNCTION IN stmt.rs
+  }
 
 	fn block(&mut self) -> Vec<Box<Stmt>> {
 		let mut statements = Vec::new();

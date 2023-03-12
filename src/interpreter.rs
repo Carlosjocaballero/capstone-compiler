@@ -48,6 +48,8 @@ Professor says can eval to StringLiteral, float, bool, nil
 
 
 pub struct Interpreter{
+    // need a fix for 10.2.1 
+    pub globals: Box<Environment>,
     pub environment: Box<Environment>,
     pub error: InterpreterError
 }
