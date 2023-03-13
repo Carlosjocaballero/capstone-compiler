@@ -113,8 +113,8 @@ impl Interpreter{
         stmt.accept(self);
     }
 
-    pub fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Box<Environment>) {
-
+    pub fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Box<Environment>){
+        // Changed to pub
         let mut previous = self.environment.clone();
 
         self.environment = environment;
