@@ -15,6 +15,7 @@ mod resolver;
 mod environment;
 mod LoxCallable;
 pub mod LoxError;
+mod LoxFunction;
 
 
 use LoxError::*;
