@@ -36,6 +36,6 @@ impl LoxFunction for LoxCallable{
         return self.declaration.params.size();
     }
     fn toString(&mut self) -> String{
-        return "<fn" + declaration.name.lexeme + ">";
+        return "<fn" + self.declaration.name.lexeme + ">";
     }
 } 

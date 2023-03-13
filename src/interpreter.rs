@@ -162,7 +162,8 @@ impl StmtVisitor<Literal> for Interpreter{
         return Ok(Literal::None);
     }
     fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Result<Literal, ScannerError> {
-        todo!()
+        let function = Box::new(LoxFunction(stmt));
+        
     }
 
     fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<Literal, ScannerError> {
