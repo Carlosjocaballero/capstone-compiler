@@ -1,36 +1,31 @@
 use crate::token::*;
 use crate::expr::*;
 use crate::interpreter::*;
-use crate::interpreter;
-use crate::environment;
+use crate::LoxCallable::LoxCallable;
+use crate::Environment;
+use crate::Stmt;
 
 //Draft
 
 pub struct LoxFunction{
     pub declaration:Stmt::Function,
-
 }
+
 impl LoxFunction{
     pub fn LoxFunction(&mut self, declaration:Stmt::Function){
         self.declaration = declaration;
     }
 }
 
-pub trait LoxFunction{
-    pub fn call(&self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Literal;
-    pub fn arity()->Literal;
-    pub fn toString()->String;
-}
-
-impl LoxFunction for LoxCallable{
+dyn impl LoxFunction for LoxCallable{
     fn call(&mut self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Literal{
-        let environment= Box::new(Environment::new_enclosed(interpreter.globals()));
+        let environment= Box::new(Environment::new_enclosed(&interpreter.globals));
         let i = 0;
-        while(i<self.declaration.params.size()){
-            environment.define(declaration.params.get(i).lexeme, arguments(i));
+        while i<self.declaration.params.size(){
+            environment.define(self.declaration.params.get(i).lexeme, arguments(i));
             i = i + 1;
         }
-        interpreter.executeBlock(declaration.body, environment);
+        interpreter.execute_block(self.declaration.body, environment);
         return None;
     }
     fn arity(&mut self) -> Literal{
