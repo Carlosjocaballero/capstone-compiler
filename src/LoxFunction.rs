@@ -16,11 +16,13 @@ impl LoxFunction{
 }
 
 pub trait LoxFunction{
-    fn call(&self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Literal;
+    pub fn call(&self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Literal;
+    pub fn arity()->Literal;
+    pub fn toString()->String;
 }
 
 impl LoxFunction for LoxCallable{
-    fn call(&self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Literal{
+    fn call(&mut self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Literal{
         let environment = Box::new(Environment::new_enclosed(interpreter.globals()));
         let i = 0;
         while(i<self.declaration.params.size()){
@@ -29,5 +31,11 @@ impl LoxFunction for LoxCallable{
         }
         interpreter.executeBlock(declaration.body, environment);
         return None;
+    }
+    fn arity(&mut self) -> Literal{
+        return self.declaration.params.size();
+    }
+    fn toString(&mut self) -> String{
+        return "<fn" + declaration.name.lexeme + ">";
     }
 } 
