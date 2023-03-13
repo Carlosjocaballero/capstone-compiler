@@ -156,7 +156,7 @@ impl StmtVisitor<Literal> for Interpreter{
 
     fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
         let mut value : Literal = Literal::None;
-        if *stmt.initializer != Expr::None{
+        if *stmt.initializer != Expr::Literal(LiteralExpr { value: Some(Literal::None) }){
             match self.evaluate(&stmt.initializer){
                 Ok(val) => value = val,
                 Err(_) => ()

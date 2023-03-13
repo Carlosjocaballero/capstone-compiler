@@ -53,12 +53,12 @@ impl Resolver{
     of function overloading
      */
     pub fn resolve_stmts(&mut self, statements: &mut Vec<Box<Stmt>>){
-        for statement in statements.iter(){
+        for statement in statements{
             self.resolve(*statement.clone()); 
         }
     }
 
-    pub fn resolve(&mut self, statement: Stmt){
+    pub fn resolve(&mut self, mut statement: Stmt){
         statement.accept(self);
     }
 
@@ -81,7 +81,7 @@ impl Resolver{
     Declaration adds the variable to the innermost scope so that it shadows any outer scope and so that we know the variable exists.
     Binding the variable name to false lets us mark it as "not ready yet"
      */
-    fn declare(&mut self, name: Token){
+    fn declare(&mut self, name: &Token){
         if self.scopes.is_empty(){return;}
 
         if let Some(scope) = self.scopes.last_mut(){
@@ -193,8 +193,8 @@ impl StmtVisitor<Literal> for Resolver{
     //11.3.6 - visitReturnStmt(stmt: &ReturnStmt)
 
     fn visit_var_stmt(&mut self, expr: &VarStmt) -> Result<Literal, ScannerError> {
-        self.declare(expr.name.clone());
-        if *expr.initializer != Expr::None{
+        self.declare(&expr.name);
+        if *expr.initializer != Expr::Literal(LiteralExpr { value: Some(Literal::None) }){
             self.resolve_expr(*expr.initializer.clone());
         }
         self.define(expr.name.clone());
