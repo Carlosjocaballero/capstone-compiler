@@ -1,7 +1,8 @@
 use crate::token::*;
 use crate::expr::*;
 use crate::interpreter::*;
-
+use crate::interpreter;
+use crate::environment;
 
 //Draft
 
@@ -23,7 +24,7 @@ pub trait LoxFunction{
 
 impl LoxFunction for LoxCallable{
     fn call(&mut self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Literal{
-        let environment = Box::new(Environment::new_enclosed(interpreter.globals()));
+        let environment= Box::new(Environment::new_enclosed(interpreter.globals()));
         let i = 0;
         while(i<self.declaration.params.size()){
             environment.define(declaration.params.get(i).lexeme, arguments(i));

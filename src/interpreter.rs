@@ -21,6 +21,7 @@ use crate::expr::*;
 use crate::LoxError::*;
 use crate::environment;
 use crate::LoxCallable::*;
+use crate::LoxFunction;
 
 /*
 The value can either be from the enum Literal (which is in token.rs) -> string, f64
@@ -163,7 +164,8 @@ impl StmtVisitor<Literal> for Interpreter{
     }
     fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Result<Literal, ScannerError> {
         let function = Box::new(LoxFunction(stmt));
-        
+        self.environment.define(stmt.name.lexeme, function);
+        Ok(Literal::None)
     }
 
     fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<Literal, ScannerError> {
