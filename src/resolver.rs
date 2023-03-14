@@ -28,7 +28,8 @@ impl Default for Resolver{
         Resolver { 
             interpreter: Interpreter{
                 environment: Environment::new(),
-                error: InterpreterError { is_error: false }
+                error: InterpreterError { is_error: false },
+                locals: vec![vec![]; 7]
             }, 
             scopes: defaultScopes, 
             error: ResolverError { is_error: false }, 

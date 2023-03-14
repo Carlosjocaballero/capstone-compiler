@@ -90,7 +90,8 @@ fn run(source: String){
 
     let mut interpreter = interpreter::Interpreter{
         environment: Environment::new(),
-        error: InterpreterError { is_error: false }
+        error: InterpreterError { is_error: false },
+        locals: vec![vec![]; 7]
     };
     let mut resoslver = resolver::Resolver{
         interpreter: interpreter.clone(),

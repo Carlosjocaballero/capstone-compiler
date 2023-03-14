@@ -38,6 +38,23 @@ impl Environment {
         self.values.insert(name, value);
     }
 
+    pub fn ancestor(&self, distance: i32) -> Environment{
+        let environment = self;
+        for i in 0..distance{
+            match environment.enclosing{
+                Some(environmentEnclosing) => environment = &environmentEnclosing,
+                None => ()
+            }
+        }
+        return *environment;
+    }
+
+    //book wants name to be a string, but the get function only takes in a reference to a Token
+    //Don't think it's possible to change a string to a Token without making a whole new Token which seems counterproductive
+    pub fn getAt(&self, distance: i32, name: Token) -> Result<Literal, ScannerError>{
+        return Ok(self.ancestor(distance).get(&name));
+    }
+
     pub fn get(&mut self, name: &Token) -> Literal{
         match self.values.get(&name.lexeme){
             Some(value) => return value.clone(),

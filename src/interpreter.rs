@@ -55,7 +55,9 @@ Professor says can eval to StringLiteral, float, bool, nil
 #[derive(Clone)]
 pub struct Interpreter{
     pub environment: Environment,
-    pub error: InterpreterError
+    pub error: InterpreterError,
+    //pub locals: HashMap<Expr, i32>
+    pub locals: Vec<Vec<i32>>
 }
 
 impl Interpreter{
@@ -116,6 +118,18 @@ impl Interpreter{
         stmt.accept(self);
     }
 
+    fn resolve(&mut self, expr: Expr, depth: i32){
+        match expr{
+            BinaryExpr => self.locals[0].push(depth),
+            GroupingExpr => self.locals[1].push(depth),
+            LiteralExpr => self.locals[2].push(depth),
+            UnaryExpr => self.locals[3].push(depth),
+            VariableExpr => self.locals[4].push(depth),
+            AssignExpr => self.locals[5].push(depth),
+            CloneExpr => self.locals[6].push(depth)
+        }
+    }
+
     fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Environment) {
         let previous : Environment = self.environment.clone();
 
@@ -133,6 +147,25 @@ impl Interpreter{
     //     self.execute_block(&stmt.statements, environment)?;
     //     Ok(())
     // }
+
+    fn lookUpVariable(&self, name: Token, expr: Expr) -> Result<Literal, ScannerError>{
+        let idx: usize;
+        match expr{
+            BinaryExpr => idx = 0,
+            GroupingExpr => idx = 1,
+            LiteralExpr => idx = 2,
+            UnaryExpr => idx = 3,
+            VariableExpr => idx = 4,
+            AssignExpr => idx = 5,
+            CloneExpr => idx = 6
+        }
+
+        if let distance = self.locals[idx][0]{
+            return self.environment.getAt(distance, name); //in book: name was originally name.lexeme but it doesn't make sense to do that here
+        }else{
+            return globals.get(name);
+        }
+    }
 
 
 
@@ -210,7 +243,8 @@ impl ExprVisitor<Literal> for Interpreter{
     }
 
     fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<Literal, ScannerError>{
-        return Ok(self.environment.get(&expr.name));
+        //return Ok(self.environment.get(&expr.name));
+        return self.lookUpVariable(expr.name, expr);
     }
 
     fn visit_grouping_expr(&mut self, expression: &GroupingExpr) -> Result<Literal, ScannerError>{
