@@ -118,7 +118,7 @@ impl Interpreter{
         stmt.accept(self);
     }
 
-    fn resolve(&mut self, expr: Expr, depth: i32){
+    pub fn resolve(&mut self, expr: Expr, depth: i32){
         match expr{
             BinaryExpr => self.locals[0].push(depth),
             GroupingExpr => self.locals[1].push(depth),
@@ -161,7 +161,7 @@ impl Interpreter{
         }
 
         if let distance = self.locals[idx][0]{
-            return self.environment.getAt(distance, name); //in book: name was originally name.lexeme but it doesn't make sense to do that here
+            return self.environment.getAt(distance, name.lexeme); 
         }else{
             return globals.get(name);
         }
@@ -244,7 +244,7 @@ impl ExprVisitor<Literal> for Interpreter{
 
     fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<Literal, ScannerError>{
         //return Ok(self.environment.get(&expr.name));
-        return self.lookUpVariable(expr.name, expr);
+        return self.lookUpVariable(expr.name, Expr::Variable(*expr));
     }
 
     fn visit_grouping_expr(&mut self, expression: &GroupingExpr) -> Result<Literal, ScannerError>{
@@ -324,7 +324,24 @@ impl ExprVisitor<Literal> for Interpreter{
             Err(_) => Literal::None
         };
 
-        self.environment.assign(expr.name.clone(), &value);
+        let idx: usize;
+        match expr{
+            BinaryExpr => idx = 0,
+            GroupingExpr => idx = 1,
+            LiteralExpr => idx = 2,
+            UnaryExpr => idx = 3,
+            VariableExpr => idx = 4,
+            AssignExpr => idx = 5,
+            CloneExpr => idx = 6
+        }
+
+        if let distance = self.locals[idx][0]{
+            self.environment.assignAt(distance, expr.name.clone(), value);
+        }else{
+            self.global.assign(expr.name.clone(), &value);
+        }
+
+        //self.environment.assign(expr.name.clone(), &value);
         return Ok(value);
     }
 }

@@ -49,10 +49,15 @@ impl Environment {
         return *environment;
     }
 
-    //book wants name to be a string, but the get function only takes in a reference to a Token
-    //Don't think it's possible to change a string to a Token without making a whole new Token which seems counterproductive
-    pub fn getAt(&self, distance: i32, name: Token) -> Result<Literal, ScannerError>{
-        return Ok(self.ancestor(distance).get(&name));
+    pub fn getAt(&self, distance: i32, name: String) -> Result<Literal, ScannerError>{
+        match self.ancestor(distance).values.get(&name){
+            Some(x) => return Ok(*x),
+            None => return Ok(Literal::None)
+        }
+    }
+
+    pub fn assignAt(&self, distance: i32, name: Token, value: Literal){
+        self.ancestor(distance).values.insert(name.lexeme, value);
     }
 
     pub fn get(&mut self, name: &Token) -> Literal{

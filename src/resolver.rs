@@ -14,7 +14,7 @@ pub struct Resolver{
     pub interpreter: Interpreter,
     pub scopes: Vec<HashMap<String, bool>>, //scopes should be treated as a stack of hashmaps
     pub error: ResolverError,
-    pub currentFunction: FunctionType //Needs to equal FunctionType::NONE
+    pub currentFunction: FunctionType //Default value is FunctionType::NONE
 }
 
 pub enum FunctionType{
@@ -104,11 +104,10 @@ impl Resolver{
         }
     }
 
-    /*CAN'T DO THIS YET */
     fn resolveLocal(&self, expr: Expr, name: Token){
         for (idx, scope) in self.scopes.iter().enumerate(){
             if scope.contains_key(&name.lexeme){
-                //self.interpreter.resolve(expr, (self.scopes.len() - 1 - idx).try_into().unwrap());
+                self.interpreter.resolve(expr, (self.scopes.len() - 1 - idx).try_into().unwrap());
                 return;
             }
         }
@@ -127,14 +126,13 @@ impl ExprVisitor<Literal> for Resolver{
             }
         }
 
-        //Can't do yet
-        /*self.resolveLocal(expr.name);*/
+        self.resolveLocal(Expr::Variable(*expr), expr.name);
         return Ok(Literal::None);
     }
 
     fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<Literal, ScannerError> {
         self.resolve_expr(*expr.value.clone());
-        /*self.resolveLocal(expr, expr.name);*/
+        self.resolveLocal(Expr::Assign(*expr), expr.name);
         return Ok(Literal::None);
     }
 
@@ -162,7 +160,7 @@ impl ExprVisitor<Literal> for Resolver{
         return Ok(Literal::None);
     }
 
-    //this function is not mentioned in the chaoter so for now return None
+    //this function is not mentioned in the chapter so for now return None
     fn visit_clone_expr(&mut self, expr: &CloneExpr) -> Result<Literal, ScannerError> {
         return Ok(Literal::None);
     }
