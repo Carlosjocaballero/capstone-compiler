@@ -49,13 +49,23 @@ Professor says can eval to StringLiteral, float, bool, nil
 
 
 pub struct Interpreter{
-    // need a fix for 10.2.1 
     pub globals: Box<Environment>,
     pub environment: Box<Environment>,
     pub error: InterpreterError
 }
 
 impl Interpreter{
+    // needs checking for 10.2.1 
+    pub fn new() -> Self {
+        let mut _globals = Box::new(Environment::new());
+        _globals.define("clock".to_owned(), Literal::None);
+        Self { 
+            globals: _globals, 
+            environment: Box::new(Environment::new()), 
+            error: InterpreterError { is_error: false }
+        }
+    }
+
     pub fn interpret(&mut self, statements: Vec<Box<Stmt>>){
         // let value = self.evaluate(&expression);
         // if let Ok(value) = value{

@@ -1,5 +1,3 @@
-use std::string;
-
 use crate::token::*;
 use crate::expr::*;
 use crate::stmt::*;
@@ -33,6 +31,7 @@ impl Parser {
 		if self.matching(&vec![TokenType::Fun]){
 			return self.function("Function".to_string());
 		}
+
 		if self.matching(&vec![TokenType::Var]){
 			return self.var_declaration();
 		}
@@ -163,14 +162,16 @@ impl Parser {
 		Box::new(Stmt::Expression(ExpressionStmt { expression: expr }))
 	}
 
-	fn function(&mut self, kind: String) -> Box<Stmt> { // fix kind string
-    	let name: Token = self.consume1(TokenType::Identifier, "Expect ".to_string() + &kind + &" name.".to_string());
-		self.consume1(TokenType::LeftParen, "Expect '(' after ".to_string() + &kind + &" name.".to_string());
+	fn function(&mut self, kind: &str) -> Box<Stmt> {
+		let message = "Expect ".to_owned() + kind + &" name.";
+    	let name: Token = self.consume(TokenType::Identifier, &message);
+		let message = "Expect '(' after ".to_owned() + kind + &" name.";
+		self.consume(TokenType::LeftParen, &message);
     	let mut parameters: Vec<Token> = Vec::new();
     	if !self.check(TokenType::RightParen) {
       		while {	// do while loop
         	if parameters.len() >= 255 {
-				self.parser_error.error(&self.peek(), "Can't have more than 255 parameters.".to_string());
+				self.parser_error.error(&self.peek(), "Can't have more than 255 parameters.".to_owned());
         	}
         	parameters.push(self.consume(TokenType::Identifier, "Expect parameter name."));
 			
@@ -179,9 +180,11 @@ impl Parser {
     	}
     	self.consume(TokenType::RightParen, "Expect ')' after parameters.");
 
-		self.consume1(TokenType::LeftBrace, "Expect '{' before ".to_string() + &kind + &" body.".to_string());
+		let message = "Expect '{' before ".to_owned() + kind + &" body.";
+		self.consume(TokenType::LeftBrace, &message);
     	let body: Vec<Box<Stmt>> = self.block();
-    	return Box::new(Stmt::Function(FunctionStmt { name: name, parameters: parameters, body: body}));
+    	
+		Box::new(Stmt::Function(FunctionStmt{ name: name, parameters: parameters, body: body }))
   	}
 
 	fn block(&mut self) -> Vec<Box<Stmt>> {
@@ -266,12 +269,6 @@ impl Parser {
 		if self.check(token_types) { return self.advance(); }
 		let peek = &self.peek();
 		self.parser_error.error(peek, message.to_string());
-		Token { _type: TokenType::Nil, lexeme: "".to_string(), literal: Literal::None, line: 0 }
-	}
-	fn consume1(&mut self, token_types: TokenType, message: String) -> Token { 
-		if self.check(token_types) { return self.advance(); }
-		let peek = &self.peek();
-		self.parser_error.error(peek, message);
 		Token { _type: TokenType::Nil, lexeme: "".to_string(), literal: Literal::None, line: 0 }
 	}
 
