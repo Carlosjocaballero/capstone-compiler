@@ -29,7 +29,7 @@ impl Parser {
 		///////////////////////////////////////////////////////////
 		
 		if self.matching(&vec![TokenType::Fun]){
-			return self.function("Function".to_string());
+			return self.function("Function");
 		}
 
 		if self.matching(&vec![TokenType::Var]){

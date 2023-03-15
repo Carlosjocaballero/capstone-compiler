@@ -172,9 +172,10 @@ impl StmtVisitor<Literal> for Interpreter{
         self.evaluate(&stmt.expression);
         return Ok(Literal::None);
     }
+
     fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Result<Literal, ScannerError> {
-        let function = Box::new(LoxFunction(stmt));
-        self.environment.define(stmt.name.lexeme, function);
+        let function = Box::new(stmt);
+        self.environment.define(stmt.name.lexeme.clone(), function.name.literal.clone());
         Ok(Literal::None)
     }
 
