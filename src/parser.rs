@@ -45,6 +45,9 @@ impl Parser {
 		if self.matching(&vec![TokenType::Print]) {
 			return self.print_statement();
 		}
+		if self.matching(&vec![TokenType::Return]) {
+			return self.return_statement();
+		}
 		if self.matching(&vec![TokenType::While]) {
 			return self.while_statement();
 		}
@@ -79,6 +82,17 @@ impl Parser {
 		let value: Box<Expr> = self.expression();
 		self.consume(TokenType::Semicolon, "Expect ';' after value. ");
 		Box::new(Stmt::Print(PrintStmt { expression: value }))
+	}
+
+	fn return_statement(&mut self) -> Box<Stmt> {
+		let keyword = self.previous();
+		let mut value: Box<Expr> = Box::new(Expr::Literal(LiteralExpr { value: Some(Literal::None) }));
+		if !self.check(TokenType::Semicolon) {
+			value = self.expression();
+		}
+
+		self.consume(TokenType::Semicolon, "Expect ';' after return value.");
+		Box::new(Stmt::Return(ReturnStmt { keyword: keyword, value: value }))
 	}
 
 	fn var_declaration(&mut self) -> Box<Stmt> {
@@ -171,7 +185,8 @@ impl Parser {
     	if !self.check(TokenType::RightParen) {
       		while {	// do while loop
         	if parameters.len() >= 255 {
-				self.parser_error.error(&self.peek(), "Can't have more than 255 parameters.".to_owned());
+				let temp_token = self.peek();
+				self.parser_error.error(&temp_token, "Can't have more than 255 parameters.".to_owned());
         	}
         	parameters.push(self.consume(TokenType::Identifier, "Expect parameter name."));
 			

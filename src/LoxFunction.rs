@@ -9,14 +9,15 @@ pub struct LoxFunction{
 }
 
 impl LoxCallable for LoxFunction {
-    fn call(&self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Literal {
-        let environment= Box::new(Environment::new_enclosed(&interpreter.globals));
-        let i = 0;
+    fn call(&self, interpreter: &mut Interpreter, arguments: Vec<Literal>) -> Literal {
+        let mut environment= Box::new(Environment::new_enclosed(&interpreter.globals));
+        let mut i = 0;
         while i < self.declaration.parameters.len() {
-            environment.define(self.declaration.parameters[i].lexeme, arguments[i]);
+            environment.define(self.declaration.parameters[i].lexeme.clone(), arguments[i].clone());
             i = i + 1;
         }
 
+        // let temp = self.declaration.body.clone();
         interpreter.execute_block(&self.declaration.body, environment);
         return Literal::None;
     }
