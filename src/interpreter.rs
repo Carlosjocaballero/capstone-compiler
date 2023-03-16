@@ -4,12 +4,11 @@
 /*
 Running file errors:
 For the functions that aren't in ExprVisitor... need to separate it because it's not a part of the trait
-
 expression::* doesn't work. says: use of undeclared crate or module `expression`
- */
+*/
 
-use std::any::{Any, TypeId}; use std::collections::HashMap;
-use std::env;
+use core::panic;
+use std::any::{Any, TypeId}; use std::env;
 //May not need this, may use Option<Object> instead
 use std::fmt::Debug;
 use std::option::Option;
@@ -21,29 +20,25 @@ use crate::{token::*, LoxError};
 use crate::expr::*;
 use crate::LoxError::*;
 use crate::environment;
+use crate::LoxCallable::*;
+use crate::LoxFunction::*;
 
 /*
 The value can either be from the enum Literal (which is in token.rs) -> string, f64
-
 the node you get as a result of using explicit parentheses in an expression -> expression goes to evaluate -> 
 goes through accept -> returns Result<T, LoxError>
-
 for unary -> will need to return boolean or f64
-
 for binary -> will all be f64
-
 SO:
 Need a value for:
 String
 f64
 Boolean
-
 Most vague one is for grouping expressions:
 That's for expressions in parentheses.
 Will that recrsively go through itself to figure out when it reaches the end of the parthenses
-
 Professor says can eval to StringLiteral, float, bool, nil
- */
+*/
 // pub enum Literal{
 //     String(String),
 //     Double(f64),
@@ -54,20 +49,32 @@ Professor says can eval to StringLiteral, float, bool, nil
 
 #[derive(Clone)]
 pub struct Interpreter{
-    pub environment: Environment,
+    pub globals: Box<Environment>,
+    pub environment: Box<Environment>,
     pub error: InterpreterError,
     //pub locals: HashMap<Expr, i32>
     pub locals: Vec<Vec<i32>>
 }
 
 impl Interpreter{
+    // needs checking for 10.2.1 
+    pub fn new() -> Self {
+        let mut _globals = Box::new(Environment::new());
+        _globals.define("clock".to_owned(), Literal::None);
+        Self { 
+            globals: _globals, 
+            environment: Box::new(Environment::new()), 
+            error: InterpreterError { is_error: false }
+        }
+    }
+
     pub fn interpret(&mut self, statements: Vec<Box<Stmt>>){
         // let value = self.evaluate(&expression);
         // if let Ok(value) = value{
         // println!("{}", self.stringify(&value))
         // }
         for statement in statements{
-            self.execute(*statement)
+            self.execute(statement)
         }
     }
 
@@ -95,10 +102,10 @@ impl Interpreter{
         }
     }
 
-    fn is_truthy(&self, object: Literal) -> bool{
+    fn is_truthy(&mut self, object: &Literal) -> bool{
         match object{
             Literal::None => false,
-            Literal::Bool(x) => x,
+            Literal::Bool(x) => *x,
             _ => true
         }
     }
@@ -114,7 +121,7 @@ impl Interpreter{
         return expression.accept(self)
     }
 
-    fn execute(&mut self, mut stmt: Stmt) {
+    fn execute(&mut self, mut stmt: Box<Stmt>) {
         stmt.accept(self);
     }
 
@@ -136,9 +143,27 @@ impl Interpreter{
         self.environment = environment;
 
         for stmt in statement{
-            self.execute(*stmt.clone())
+            self.execute(stmt.clone())
         }
+        // println!("outter environment:");
+        // previous.print_map();
+        // println!("inner environment: ");
+        // self.environment.print_map();
 
+        // for (key,value) in previous.values.clone(){
+        //     if self.environment.values.contains_key(&key){
+        //         //println!("works!");
+        //         let new_value = match self.environment.values.get(&key){
+        //             Some(value) => value,
+        //             None => &Literal::None
+        //         };
+        //         previous.values.insert(key, new_value.clone());
+        //     }
+        // }
+
+        //println!("outter updated:");
+        //previous.print_map();
+        
         self.environment = previous;
     }
 
@@ -176,15 +201,48 @@ impl Interpreter{
 
 impl StmtVisitor<Literal> for Interpreter{
     fn visit_expression_stmt(&mut self, stmt: &ExpressionStmt) -> Result<Literal, ScannerError> {
-        self.evaluate(&stmt.expression)
+        self.evaluate(&stmt.expression);
+        return Ok(Literal::None);
     }
+
+    fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Result<Literal, ScannerError> {
+        // 10.6 problem
+        let function = LoxFunction::new(stmt, &self.environment); // becomes pointless
+        self.environment.define(stmt.name.lexeme.clone(), function.declaration.name.literal.clone());
+        Ok(Literal::None)
+    }
+
+    fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<Literal, ScannerError> {
+        let x = match self.evaluate(&stmt.condition){
+            Ok(x) => x,
+            Err(_) => Literal::None
+        };
+        if self.is_truthy(&x) {
+            self.execute(stmt.then_branch.clone());
+        } else if let Some(ref else_branch) = stmt.else_branch {
+            self.execute(else_branch.clone());
+        }
+        Ok(Literal::None)    
+    }
+
 
     fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Result<Literal, ScannerError> {
         match self.evaluate(&stmt.expression){
             Ok(value) => println!("{}", self.stringify(&value)),
             Err(_) => ()
         }
-        return Ok(Literal::None);
+        Ok(Literal::None)
+    }
+
+    fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Result<Literal, ScannerError> {
+        let mut value : Literal = Literal::None;
+        if *stmt.value != Expr::Literal(LiteralExpr { value: Some(Literal::None) }) {   // check
+            match self.evaluate(&stmt.value){
+                Ok(val) => value = val,
+                Err(_) => ()
+            }
+        }
+        Ok(value)
     }
 
     fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
@@ -199,13 +257,30 @@ impl StmtVisitor<Literal> for Interpreter{
         Ok(Literal::None)
     }
 
-    fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Result<Literal, ScannerError> {
-        let new_environment = Environment::new_enclosed(self.environment.clone());
-        self.execute_block(&expr.statements, new_environment);
-        return Ok(Literal::None)
+    fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<Literal, ScannerError> {
+        let new_environment = Box::new(Environment::new_enclosed(&self.environment));
+        self.execute_block(&stmt.statements, new_environment);
+        Ok(Literal::None)
     }
 
-    
+    fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Result<Literal, ScannerError> {
+        let mut eval_condition = match self.evaluate(&stmt.condition){
+            Ok(literal) => literal,
+            Err(_) => Literal::None
+        };
+
+        //////////////////////////////////////////////////////
+        ///////////////////CHECK IF LOOP WORKS////////////////
+        //////////////////////////////////////////////////////
+        while self.is_truthy(&eval_condition){
+            self.execute(stmt.body.clone());
+            eval_condition = match self.evaluate(&stmt.condition){
+                Ok(literal) => literal,
+                Err(_) => Literal::None
+            };
+        }
+        return Ok(Literal::None);
+    }
 
 }
 
@@ -232,7 +307,7 @@ impl ExprVisitor<Literal> for Interpreter{
         let right_num = if let Literal::Number(x) = right{x} else{ 0.0 };
 
         match expression.operator._type{
-            TokenType::Bang => return Ok::<Literal, ScannerError>(Literal::Bool(!self.is_truthy(right))),
+            TokenType::Bang => return Ok::<Literal, ScannerError>(Literal::Bool(!self.is_truthy(&right))),
             TokenType::Minus => {
                 self.check_number_operand(&expression.operator, &right);
                 return Ok::<Literal, ScannerError>(Literal::Number(-1.0 * right_num))
@@ -314,6 +389,30 @@ impl ExprVisitor<Literal> for Interpreter{
         }
     }
 
+    fn visit_calling_expr(&mut self, expr: &CallingExpr) -> Result<Literal, ScannerError> {
+        // the match gets the literal from the self.evaluate()
+        let callee = match self.evaluate(&expr.callee) {
+            Ok(literal) => literal,
+            Err(_) => Literal::None
+        };
+
+        let mut arguments: Vec<Literal> = Vec::new();
+        for arg in &expr.arguments{
+            arguments.push(match self.evaluate(&arg){
+                Ok(literal) => literal,
+                Err(_) => Literal::None
+            });
+        }
+
+        if arguments.len() != callee.arity() {
+            return Err(ScannerError { is_error: true });
+            // RuntimeError(expr.paren, "Expected " + function.arity() + " arguments but got " + arguments.size() + ".");
+        };
+
+        // returns an Ok Result with the Literal from call() 
+        Ok(callee.call(self, arguments))
+    }
+
     fn visit_clone_expr(&mut self, expr: &CloneExpr) -> Result<Literal, ScannerError> {
         todo!()
     }
@@ -343,6 +442,33 @@ impl ExprVisitor<Literal> for Interpreter{
 
         //self.environment.assign(expr.name.clone(), &value);
         return Ok(value);
+    }
+
+    fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Result<Literal, ScannerError> {
+        let left = match self.evaluate(&expr.left){
+            Ok(literal) => literal,
+            Err(_) => Literal::None
+        };
+
+        if expr.operator._type == TokenType::Or{
+            if self.is_truthy(&left) {return Ok(left);}
+            else {
+                let rtrn = match self.evaluate(&expr.right){
+                    Ok(literal) => literal,
+                    Err(_) => Literal::None 
+                };
+                return Ok(rtrn)
+            }
+        } else{
+            if !self.is_truthy(&left) {return Ok(left);}
+            else{
+                let rtrn = match self.evaluate(&expr.right){
+                    Ok(literal) => literal,
+                    Err(_) => Literal::None 
+                };
+                return Ok(rtrn)
+            }
+        }
     }
 }
 

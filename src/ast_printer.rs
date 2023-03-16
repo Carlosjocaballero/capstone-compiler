@@ -27,6 +27,9 @@ impl ExprVisitor<String> for AstPrinter {
     fn visit_grouping_expr(&mut self, expr: &GroupingExpr) -> Result<String, ScannerError> {
         self.parenthesize(&"group".to_string(), &[&expr.expression])
     }
+    fn visit_calling_expr(&mut self, expr: &CallingExpr) -> Result<String, ScannerError> {
+        self.parenthesize(&"group".to_string(), &[&expr.expression])
+    }
     fn visit_literal_expr(&mut self, expr: &LiteralExpr) -> Result<String, ScannerError> {
         match &expr.value{
             Some(x) => Ok(x.to_string()),

@@ -1,12 +1,19 @@
-var a = "global";
-{
-    print a; // Undefined;
-    var b = "inner";
-    {
-        print b; // Undefined;
-        var c = "hello";
-    }
-    print b; // "inner"
-    print c; // undefined
+
+print 53;
+fun sayHi(first, last) {
+  print "Hi, " + first + " " + last + "!";
 }
-print a; // global
+
+sayHi("Dear", "Reader");
+
+print 5;
+
+var a = 0;
+var temp;
+
+for (var b = 1; a < 10000; b = temp + b) {
+  print a;
+  temp = a;
+  a = b;
+}
+

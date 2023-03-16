@@ -8,12 +8,15 @@ mod interpreter;
 mod scanner;
 mod expr;
 mod stmt;
-mod generate_ast;
-mod ast_printer;
+//mod generate_ast;
+//mod ast_printer;
 mod parser;
 mod resolver;
 mod environment;
+// mod Return;
+mod LoxCallable;
 pub mod LoxError;
+mod LoxFunction;
 
 
 use LoxError::*;
@@ -88,16 +91,7 @@ fn run(source: String){
     // println!("{}", tree_string);
 
 
-    let mut interpreter = interpreter::Interpreter{
-        environment: Environment::new(),
-        error: InterpreterError { is_error: false },
-        locals: vec![vec![]; 7]
-    };
-    let mut resoslver = resolver::Resolver{
-        interpreter: interpreter.clone(),
-        ..Default::default()
-    };
-    resoslver.resolve_stmts(&mut statements.clone());
+    let mut interpreter = interpreter::Interpreter::new();
     interpreter.interpret(statements);
     if interpreter.error.is_error == true {std::process::exit(70);}
 
