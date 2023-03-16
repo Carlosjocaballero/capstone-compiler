@@ -10,20 +10,6 @@ pub trait LoxCallable {
 
 impl LoxCallable for Literal {
     fn call(&self, interpreter: &mut Interpreter, arguments: Vec<Literal>) -> Literal {
-        todo!()
-    }
-
-    fn arity(&self) -> usize {
-        todo!()
-    }
-
-    fn toString(&self) -> String {
-        todo!()
-    }
-}
-
-impl LoxCallable for Interpreter {
-    fn call(&self, interpreter: &mut Interpreter, arguments: Vec<Literal>) -> Literal {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as f64;
         Literal::Number(now / 1000.0)
     }
