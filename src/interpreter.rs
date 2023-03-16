@@ -21,7 +21,7 @@ use crate::expr::*;
 use crate::LoxError::*;
 use crate::environment;
 use crate::LoxCallable::*;
-use crate::LoxFunction;
+use crate::LoxFunction::*;
 
 /*
 The value can either be from the enum Literal (which is in token.rs) -> string, f64
@@ -174,8 +174,9 @@ impl StmtVisitor<Literal> for Interpreter{
     }
 
     fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Result<Literal, ScannerError> {
-        let function = Box::new(stmt);
-        self.environment.define(stmt.name.lexeme.clone(), function.name.literal.clone());
+        // 10.6 problem
+        let function = LoxFunction::new(stmt, &self.environment); // becomes pointless
+        self.environment.define(stmt.name.lexeme.clone(), function.declaration.name.literal.clone());
         Ok(Literal::None)
     }
 
@@ -198,7 +199,18 @@ impl StmtVisitor<Literal> for Interpreter{
             Ok(value) => println!("{}", self.stringify(&value)),
             Err(_) => ()
         }
-        return Ok(Literal::None);
+        Ok(Literal::None)
+    }
+
+    fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Result<Literal, ScannerError> {
+        let mut value : Literal = Literal::None;
+        if *stmt.value != Expr::Literal(LiteralExpr { value: Some(Literal::None) }) {   // check
+            match self.evaluate(&stmt.value){
+                Ok(val) => value = val,
+                Err(_) => ()
+            }
+        }
+        Ok(value)
     }
 
     fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
@@ -214,9 +226,9 @@ impl StmtVisitor<Literal> for Interpreter{
     }
 
     fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<Literal, ScannerError> {
-        let mut new_environment = Box::new(Environment::new_enclosed(&self.environment));
+        let new_environment = Box::new(Environment::new_enclosed(&self.environment));
         self.execute_block(&stmt.statements, new_environment);
-        return Ok(Literal::None)
+        Ok(Literal::None)
     }
 
     fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Result<Literal, ScannerError> {
