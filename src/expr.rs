@@ -6,6 +6,7 @@ use std::any::{Any, TypeId};
 #[derive(PartialEq, Clone, Debug)]
 pub enum Expr {
     Binary(BinaryExpr),
+    Call(CallingExpr),
     Grouping(GroupingExpr),
     Literal(LiteralExpr),
     Logical(LogicalExpr),
@@ -19,6 +20,7 @@ impl Expr {
     pub fn accept<T>(&self, expr_visitor: &mut dyn ExprVisitor<T>) -> Result<T, ScannerError> {
         match self {
             Expr::Binary(v) => v.accept(expr_visitor), 
+            Expr::Call(v) => v.accept(expr_visitor),
             Expr::Grouping(v) => v.accept(expr_visitor), 
             Expr::Literal(v) => v.accept(expr_visitor), 
             Expr::Logical(v) => v.accept(expr_visitor), 
@@ -37,6 +39,14 @@ pub struct BinaryExpr {
     pub operator: Token,
     pub right: Box<Expr>,
 }
+
+#[derive(PartialEq, Clone, Debug)]
+pub struct CallingExpr {
+    pub callee: Box<Expr>,
+    pub paren: Token,
+    pub arguments: Vec<Box<Expr>>,
+}
+
 #[derive(PartialEq, Clone, Debug)]
 pub struct GroupingExpr {
     pub expression: Box<Expr>,
@@ -79,6 +89,7 @@ pub struct AssignExpr{
 pub trait ExprVisitor<T> {
     fn visit_binary_expr(&mut self, expr: &BinaryExpr) -> Result<T, ScannerError>;
     fn visit_grouping_expr(&mut self, expr: &GroupingExpr) -> Result<T, ScannerError>;
+    fn visit_calling_expr(&mut self, expr: &CallingExpr) -> Result<T, ScannerError>;
     fn visit_literal_expr(&mut self, expr: &LiteralExpr) -> Result<T, ScannerError>;
     fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Result<T, ScannerError>;
     fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Result<T, ScannerError>;
@@ -96,6 +107,12 @@ impl BinaryExpr {
 impl GroupingExpr {
     pub fn accept<T>(&self, visitor: &mut dyn ExprVisitor<T>) -> Result<T, ScannerError> {
         visitor.visit_grouping_expr(self)
+    }
+}
+
+impl CallingExpr {
+    pub fn accept<T>(&self, visitor: &mut dyn ExprVisitor<T>) -> Result<T, ScannerError> {
+        visitor.visit_calling_expr(self)
     }
 }
 

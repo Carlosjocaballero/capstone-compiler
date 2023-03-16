@@ -11,8 +11,12 @@ mod stmt;
 //mod generate_ast;
 //mod ast_printer;
 mod parser;
+mod resolver;
 mod environment;
+// mod Return;
+mod LoxCallable;
 pub mod LoxError;
+mod LoxFunction;
 
 
 use LoxError::*;
@@ -87,10 +91,7 @@ fn run(source: String){
     // println!("{}", tree_string);
 
 
-    let mut interpreter = interpreter::Interpreter{
-        environment: Box::new(Environment::new()),
-        error: InterpreterError { is_error: false }
-    };
+    let mut interpreter = interpreter::Interpreter::new();
     interpreter.interpret(statements);
     if interpreter.error.is_error == true {std::process::exit(70);}
 

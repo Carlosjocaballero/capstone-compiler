@@ -1,4 +1,13 @@
 
+print 53;
+fun sayHi(first, last) {
+  print "Hi, " + first + " " + last + "!";
+}
+
+sayHi("Dear", "Reader");
+
+print 5;
+
 var a = 0;
 var temp;
 

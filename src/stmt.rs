@@ -5,7 +5,9 @@ use crate::expr::*;
 #[derive(Clone, Debug)]
 pub enum Stmt {
     Expression(ExpressionStmt),
+    Function(FunctionStmt),
     Print(PrintStmt),
+    Return(ReturnStmt),
     Var(VarStmt),
     Block(BlockStmt),
     If(IfStmt),
@@ -16,7 +18,9 @@ impl Stmt {
     pub fn accept<T>(&mut self, stmt_visitor: &mut dyn StmtVisitor<T>) -> Result<T, ScannerError> {
         match self {
             Stmt::Expression(v) => v.accept(stmt_visitor), 
+            Stmt::Function(v) => v.accept(stmt_visitor),
             Stmt::Print(v) => v.accept(stmt_visitor),
+            Stmt::Return(v) => v.accept(stmt_visitor),
             Stmt::Var(v) => v.accept(stmt_visitor),
             Stmt::Block(v) => v.accept(stmt_visitor),
             Stmt::If(v) => v.accept(stmt_visitor),
@@ -29,10 +33,22 @@ impl Stmt {
 pub struct ExpressionStmt {
     pub expression: Box<Expr>,
 }
+#[derive(Clone, Debug)]
+pub struct FunctionStmt{
+    pub name: Token,
+    pub parameters: Vec<Token>,
+    pub body: Vec<Box<Stmt>>
+}
 
 #[derive(Clone, Debug)]
 pub struct PrintStmt {
     pub expression: Box<Expr>,
+}
+
+#[derive(Clone, Debug)]
+pub struct ReturnStmt {
+    pub keyword: Token,
+    pub value: Box<Expr>
 }
 
 #[derive(Clone, Debug)]
@@ -61,7 +77,9 @@ pub struct WhileStmt{
 
 pub trait StmtVisitor<T> {
     fn visit_expression_stmt(&mut self, stmt: &ExpressionStmt) -> Result<T, ScannerError>;
+    fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Result<T, ScannerError>;
     fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Result<T, ScannerError>;
+    fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Result<T, ScannerError>;
     fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<T, ScannerError>;
     fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<T, ScannerError>;
     fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<T, ScannerError>;
@@ -74,9 +92,21 @@ impl ExpressionStmt {
     }
 }
 
+impl FunctionStmt {
+    pub fn accept<T>(&mut self, visitor: &mut dyn StmtVisitor<T>) -> Result<T, ScannerError> {
+        visitor.visit_function_stmt(self)
+    }
+}
+
 impl PrintStmt {
     pub fn accept<T>(&mut self, visitor: &mut dyn StmtVisitor<T>) -> Result<T, ScannerError> {
         visitor.visit_print_stmt(self)
+    }
+}
+
+impl ReturnStmt {
+    pub fn accept<T>(&mut self, visitor: &mut dyn StmtVisitor<T>) -> Result<T, ScannerError> {
+        visitor.visit_return_stmt(self)
     }
 }
 

@@ -20,6 +20,8 @@ use crate::{token::*, LoxError};
 use crate::expr::*;
 use crate::LoxError::*;
 use crate::environment;
+use crate::LoxCallable::*;
+use crate::LoxFunction::*;
 
 /*
 The value can either be from the enum Literal (which is in token.rs) -> string, f64
@@ -47,11 +49,23 @@ Professor says can eval to StringLiteral, float, bool, nil
 
 
 pub struct Interpreter{
+    pub globals: Box<Environment>,
     pub environment: Box<Environment>,
     pub error: InterpreterError
 }
 
 impl Interpreter{
+    // needs checking for 10.2.1 
+    pub fn new() -> Self {
+        let mut _globals = Box::new(Environment::new());
+        _globals.define("clock".to_owned(), Literal::None);
+        Self { 
+            globals: _globals, 
+            environment: Box::new(Environment::new()), 
+            error: InterpreterError { is_error: false }
+        }
+    }
+
     pub fn interpret(&mut self, statements: Vec<Box<Stmt>>){
         // let value = self.evaluate(&expression);
         // if let Ok(value) = value{
@@ -109,8 +123,8 @@ impl Interpreter{
         stmt.accept(self);
     }
 
-    fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Box<Environment>) {
-
+    pub fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Box<Environment>){
+        // Changed to pub
         let mut previous = self.environment.clone();
 
         self.environment = environment;
@@ -159,6 +173,13 @@ impl StmtVisitor<Literal> for Interpreter{
         return Ok(Literal::None);
     }
 
+    fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Result<Literal, ScannerError> {
+        // 10.6 problem
+        let function = LoxFunction::new(stmt, &self.environment); // becomes pointless
+        self.environment.define(stmt.name.lexeme.clone(), function.declaration.name.literal.clone());
+        Ok(Literal::None)
+    }
+
     fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<Literal, ScannerError> {
         let x = match self.evaluate(&stmt.condition){
             Ok(x) => x,
@@ -173,202 +194,235 @@ impl StmtVisitor<Literal> for Interpreter{
     }
 
 
-fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Result<Literal, ScannerError> {
+    fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Result<Literal, ScannerError> {
         match self.evaluate(&stmt.expression){
             Ok(value) => println!("{}", self.stringify(&value)),
             Err(_) => ()
         }
-        return Ok(Literal::None);
-}
-
-fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
-    let mut value : Literal = Literal::None;
-    if *stmt.initializer != Expr::Literal(LiteralExpr { value: Some(Literal::None) }){
-        match self.evaluate(&stmt.initializer){
-            Ok(val) => value = val,
-            Err(_) => ()
-        }
+        Ok(Literal::None)
     }
-    self.environment.define(stmt.name.lexeme.clone(), value);
-    Ok(Literal::None)
-}
 
-fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<Literal, ScannerError> {
-    let mut new_environment = Box::new(Environment::new_enclosed(&self.environment));
-    self.execute_block(&stmt.statements, new_environment);
-    return Ok(Literal::None)
-}
+    fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Result<Literal, ScannerError> {
+        let mut value : Literal = Literal::None;
+        if *stmt.value != Expr::Literal(LiteralExpr { value: Some(Literal::None) }) {   // check
+            match self.evaluate(&stmt.value){
+                Ok(val) => value = val,
+                Err(_) => ()
+            }
+        }
+        Ok(value)
+    }
 
-fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Result<Literal, ScannerError> {
-    let mut eval_condition = match self.evaluate(&stmt.condition){
-        Ok(literal) => literal,
-        Err(_) => Literal::None
-    };
+    fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<Literal, ScannerError> {
+        let mut value : Literal = Literal::None;
+        if *stmt.initializer != Expr::Literal(LiteralExpr { value: Some(Literal::None) }){
+            match self.evaluate(&stmt.initializer){
+                Ok(val) => value = val,
+                Err(_) => ()
+            }
+        }
+        self.environment.define(stmt.name.lexeme.clone(), value);
+        Ok(Literal::None)
+    }
 
-    //////////////////////////////////////////////////////
-    ///////////////////CHECK IF LOOP WORKS////////////////
-    //////////////////////////////////////////////////////
-    while self.is_truthy(&eval_condition){
-        self.execute(stmt.body.clone());
-        eval_condition = match self.evaluate(&stmt.condition){
+    fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<Literal, ScannerError> {
+        let new_environment = Box::new(Environment::new_enclosed(&self.environment));
+        self.execute_block(&stmt.statements, new_environment);
+        Ok(Literal::None)
+    }
+
+    fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Result<Literal, ScannerError> {
+        let mut eval_condition = match self.evaluate(&stmt.condition){
             Ok(literal) => literal,
             Err(_) => Literal::None
         };
+
+        //////////////////////////////////////////////////////
+        ///////////////////CHECK IF LOOP WORKS////////////////
+        //////////////////////////////////////////////////////
+        while self.is_truthy(&eval_condition){
+            self.execute(stmt.body.clone());
+            eval_condition = match self.evaluate(&stmt.condition){
+                Ok(literal) => literal,
+                Err(_) => Literal::None
+            };
+        }
+        return Ok(Literal::None);
     }
-    return Ok(Literal::None);
-}
 
 }
 
 impl ExprVisitor<Literal> for Interpreter{
-//will return the value related to the expression
-fn visit_literal_expr(&mut self, expression: &LiteralExpr) -> Result<Literal, ScannerError>{
-    match &expression.value{
-        Some(x) => Ok(x.clone()),
-        None => {
-            Ok(Literal::None)
-        }
-    }
-}
-
-fn visit_unary_expr(&mut self, expression: &UnaryExpr) -> Result<Literal, ScannerError>{
-    let right = self.evaluate(&expression.right); //be Box<Expr>
-
-    let right = match right{
-        Ok(x) => x,
-        Err(_) => Literal::None,
-    };
-
-    // RETURN VALUE ACCORDING TO LITERAL TYPE
-    let right_num = if let Literal::Number(x) = right{x} else{ 0.0 };
-
-    match expression.operator._type{
-        TokenType::Bang => return Ok::<Literal, ScannerError>(Literal::Bool(!self.is_truthy(&right))),
-        TokenType::Minus => {
-            self.check_number_operand(&expression.operator, &right);
-            return Ok::<Literal, ScannerError>(Literal::Number(-1.0 * right_num))
-        },
-        _ => return Ok(Literal::None)
-    };
-    //Unreachable
-}
-
-fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<Literal, ScannerError>{
-    //println!("interpreter:visit_variable_expr():250");
-    //self.environment.print_map();
-    return Ok(self.environment.get(&expr.name));
-}
-
-fn visit_grouping_expr(&mut self, expression: &GroupingExpr) -> Result<Literal, ScannerError>{
-    match self.evaluate(&expression.expression){
-        Ok(x) => Ok(x),
-        Err(_) => Ok(Literal::None),
-    }
-}
-
-// TEST TO SEE IF THIS WORKS. MIGHT NOT WORK
-fn visit_binary_expr(&mut self, expression: &BinaryExpr) -> Result<Literal, ScannerError>{
-    let left = match self.evaluate(&expression.left){
-        Ok(x) => x,
-        Err(_) => Literal::None
-    };
-    let right = match self.evaluate(&expression.right){
-        Ok(x) => x,
-        Err(_) => Literal::None
-    };
-
-    let left_num = if let Literal::Number(x) = left{x} else {0.0};
-    let right_num = if let Literal::Number(x) = right{x} else {0.0};
-
-    match expression.operator._type{
-        TokenType::Greater => {
-            self.check_number_operands(&expression.operator, &left, &right);
-            return Ok(Literal::Bool(left_num > right_num))
-        },
-        TokenType::GreaterEqual => {
-            self.check_number_operands(&expression.operator, &left, &right);
-            return Ok(Literal::Bool(left_num >= right_num))
-        },
-        TokenType::Less => {
-            self.check_number_operands(&expression.operator, &left, &right);
-            return Ok(Literal::Bool(left_num < right_num))
-        },
-        TokenType::LessEqual => {
-            self.check_number_operands(&expression.operator, &left, &right);
-            return Ok(Literal::Bool(left_num <= right_num))
-        },
-        TokenType::BangEqual => return Ok(Literal::Bool(!self.is_equal(left, right))),
-        TokenType::EqualEqual => return Ok(Literal::Bool(self.is_equal(left, right))),
-        TokenType::Minus => {
-            self.check_number_operands(&expression.operator, &left, &right);
-            return Ok(Literal::Number(left_num - right_num))
-        },
-        TokenType::Plus => {
-            if let (Literal::Number(x), Literal::Number(y)) = (&left, &right){
-                return Ok(Literal::Number(x + y))
-            } else if let (Literal::StringLiteral(x), Literal::StringLiteral(y)) = (&left, &right){
-                return Ok(Literal::StringLiteral(format!("{}{}", x, y)))
-            } else {
-                let err : ScannerError = ScannerError { is_error: false };
-                self.error.run_time_error(&expression.operator, "Operands must be two numbers or two strings.".to_string());
-                return Err(err);
+    //will return the value related to the expression
+    fn visit_literal_expr(&mut self, expression: &LiteralExpr) -> Result<Literal, ScannerError>{
+        match &expression.value{
+            Some(x) => Ok(x.clone()),
+            None => {
+                Ok(Literal::None)
             }
         }
-        TokenType::Slash => {
-            self.check_number_operands(&expression.operator, &left, &right);
-            return Ok(Literal::Number(left_num / right_num))
-        },
-        TokenType::Star => {
-            self.check_number_operands(&expression.operator, &left, &right);
-            return Ok(Literal::Number(left_num * right_num))
-        },
-        _ => return Err(ScannerError { is_error: true })
     }
-}
 
-fn visit_clone_expr(&mut self, expr: &CloneExpr) -> Result<Literal, ScannerError> {
-    todo!()
-}
+    fn visit_unary_expr(&mut self, expression: &UnaryExpr) -> Result<Literal, ScannerError>{
+        let right = self.evaluate(&expression.right); //be Box<Expr>
 
-fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<Literal, ScannerError>{
-    let value = match self.evaluate(&expr.value){
-        Ok(val) => val,
-        Err(_) => Literal::None
-    };
-    // self.environment.print_map();
-    self.environment.assign(expr.name.clone(), &value);
-    // self.environment.print_map();
-    return Ok(value);
-}
+        let right = match right{
+            Ok(x) => x,
+            Err(_) => Literal::None,
+        };
 
-fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Result<Literal, ScannerError> {
-    let left = match self.evaluate(&expr.left){
-        Ok(literal) => literal,
-        Err(_) => Literal::None
-    };
+        // RETURN VALUE ACCORDING TO LITERAL TYPE
+        let right_num = if let Literal::Number(x) = right{x} else{ 0.0 };
 
-    if expr.operator._type == TokenType::Or{
-        if self.is_truthy(&left) {return Ok(left);}
-        else {
-            let rtrn = match self.evaluate(&expr.right){
-                Ok(literal) => literal,
-                Err(_) => Literal::None 
-            };
-            return Ok(rtrn)
-        }
-    } else{
-        if !self.is_truthy(&left) {return Ok(left);}
-        else{
-            let rtrn = match self.evaluate(&expr.right){
-                Ok(literal) => literal,
-                Err(_) => Literal::None 
-            };
-            return Ok(rtrn)
+        match expression.operator._type{
+            TokenType::Bang => return Ok::<Literal, ScannerError>(Literal::Bool(!self.is_truthy(&right))),
+            TokenType::Minus => {
+                self.check_number_operand(&expression.operator, &right);
+                return Ok::<Literal, ScannerError>(Literal::Number(-1.0 * right_num))
+            },
+            _ => return Ok(Literal::None)
+        };
+        //Unreachable
+    }
+
+    fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<Literal, ScannerError>{
+        //println!("interpreter:visit_variable_expr():250");
+        //self.environment.print_map();
+        return Ok(self.environment.get(&expr.name));
+    }
+
+    fn visit_grouping_expr(&mut self, expression: &GroupingExpr) -> Result<Literal, ScannerError>{
+        match self.evaluate(&expression.expression){
+            Ok(x) => Ok(x),
+            Err(_) => Ok(Literal::None),
         }
     }
 
+    // TEST TO SEE IF THIS WORKS. MIGHT NOT WORK
+    fn visit_binary_expr(&mut self, expression: &BinaryExpr) -> Result<Literal, ScannerError>{
+        let left = match self.evaluate(&expression.left){
+            Ok(x) => x,
+            Err(_) => Literal::None
+        };
+        let right = match self.evaluate(&expression.right){
+            Ok(x) => x,
+            Err(_) => Literal::None
+        };
 
-}
+        let left_num = if let Literal::Number(x) = left{x} else {0.0};
+        let right_num = if let Literal::Number(x) = right{x} else {0.0};
+
+        match expression.operator._type{
+            TokenType::Greater => {
+                self.check_number_operands(&expression.operator, &left, &right);
+                return Ok(Literal::Bool(left_num > right_num))
+            },
+            TokenType::GreaterEqual => {
+                self.check_number_operands(&expression.operator, &left, &right);
+                return Ok(Literal::Bool(left_num >= right_num))
+            },
+            TokenType::Less => {
+                self.check_number_operands(&expression.operator, &left, &right);
+                return Ok(Literal::Bool(left_num < right_num))
+            },
+            TokenType::LessEqual => {
+                self.check_number_operands(&expression.operator, &left, &right);
+                return Ok(Literal::Bool(left_num <= right_num))
+            },
+            TokenType::BangEqual => return Ok(Literal::Bool(!self.is_equal(left, right))),
+            TokenType::EqualEqual => return Ok(Literal::Bool(self.is_equal(left, right))),
+            TokenType::Minus => {
+                self.check_number_operands(&expression.operator, &left, &right);
+                return Ok(Literal::Number(left_num - right_num))
+            },
+            TokenType::Plus => {
+                if let (Literal::Number(x), Literal::Number(y)) = (&left, &right){
+                    return Ok(Literal::Number(x + y))
+                } else if let (Literal::StringLiteral(x), Literal::StringLiteral(y)) = (&left, &right){
+                    return Ok(Literal::StringLiteral(format!("{}{}", x, y)))
+                } else {
+                    let err : ScannerError = ScannerError { is_error: false };
+                    self.error.run_time_error(&expression.operator, "Operands must be two numbers or two strings.".to_string());
+                    return Err(err);
+                }
+            }
+            TokenType::Slash => {
+                self.check_number_operands(&expression.operator, &left, &right);
+                return Ok(Literal::Number(left_num / right_num))
+            },
+            TokenType::Star => {
+                self.check_number_operands(&expression.operator, &left, &right);
+                return Ok(Literal::Number(left_num * right_num))
+            },
+            _ => return Err(ScannerError { is_error: true })
+        }
+    }
+
+    fn visit_calling_expr(&mut self, expr: &CallingExpr) -> Result<Literal, ScannerError> {
+        // the match gets the literal from the self.evaluate()
+        let callee = match self.evaluate(&expr.callee) {
+            Ok(literal) => literal,
+            Err(_) => Literal::None
+        };
+
+        let mut arguments: Vec<Literal> = Vec::new();
+        for arg in &expr.arguments{
+            arguments.push(match self.evaluate(&arg){
+                Ok(literal) => literal,
+                Err(_) => Literal::None
+            });
+        }
+
+        if arguments.len() != callee.arity() {
+            return Err(ScannerError { is_error: true });
+            // RuntimeError(expr.paren, "Expected " + function.arity() + " arguments but got " + arguments.size() + ".");
+        };
+
+        // returns an Ok Result with the Literal from call() 
+        Ok(callee.call(self, arguments))
+    }
+
+    fn visit_clone_expr(&mut self, expr: &CloneExpr) -> Result<Literal, ScannerError> {
+        todo!()
+    }
+
+    fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<Literal, ScannerError>{
+        let value = match self.evaluate(&expr.value){
+            Ok(val) => val,
+            Err(_) => Literal::None
+        };
+        // self.environment.print_map();
+        self.environment.assign(expr.name.clone(), &value);
+        // self.environment.print_map();
+        return Ok(value);
+    }
+
+    fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Result<Literal, ScannerError> {
+        let left = match self.evaluate(&expr.left){
+            Ok(literal) => literal,
+            Err(_) => Literal::None
+        };
+
+        if expr.operator._type == TokenType::Or{
+            if self.is_truthy(&left) {return Ok(left);}
+            else {
+                let rtrn = match self.evaluate(&expr.right){
+                    Ok(literal) => literal,
+                    Err(_) => Literal::None 
+                };
+                return Ok(rtrn)
+            }
+        } else{
+            if !self.is_truthy(&left) {return Ok(left);}
+            else{
+                let rtrn = match self.evaluate(&expr.right){
+                    Ok(literal) => literal,
+                    Err(_) => Literal::None 
+                };
+                return Ok(rtrn)
+            }
+        }
+    }
 }
 
 trait StringUtils{
