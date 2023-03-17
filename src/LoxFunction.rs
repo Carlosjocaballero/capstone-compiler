@@ -27,7 +27,8 @@ impl LoxCallable for LoxFunction {
             i = i + 1;
         }
 
-        interpreter.execute_block(&self.declaration.body, environment); // 10.5.1 need fix
+        interpreter.execute_block(&self.declaration.body, *environment); // 10.5.1 need fix
+                                                                                    //Fixed -Christina
         return Literal::None;
     }
 

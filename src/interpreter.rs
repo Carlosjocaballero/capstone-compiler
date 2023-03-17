@@ -52,7 +52,6 @@ pub struct Interpreter{
     pub globals: Box<Environment>,
     pub environment: Box<Environment>,
     pub error: InterpreterError,
-    //pub locals: HashMap<Expr, i32>
     pub locals: Vec<Vec<i32>>
 }
 
@@ -64,7 +63,8 @@ impl Interpreter{
         Self { 
             globals: _globals, 
             environment: Box::new(Environment::new()), 
-            error: InterpreterError { is_error: false }
+            error: InterpreterError { is_error: false },
+            locals: vec![vec![]; 7]
         }
     }
 
@@ -137,10 +137,11 @@ impl Interpreter{
         }
     }
 
-    fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Environment) {
-        let previous : Environment = self.environment.clone();
+    pub fn execute_block(&mut self, statement: &Vec<Box<Stmt>>, environment: Environment) {
+        // Changed to pub
+        let mut previous = self.environment.clone();
 
-        self.environment = environment;
+        self.environment = Box::new(environment);
 
         for stmt in statement{
             self.execute(stmt.clone())
@@ -173,7 +174,7 @@ impl Interpreter{
     //     Ok(())
     // }
 
-    fn lookUpVariable(&self, name: Token, expr: Expr) -> Result<Literal, ScannerError>{
+    fn lookUpVariable(&mut self, name: Token, expr: Expr) -> Result<Literal, ScannerError>{
         let idx: usize;
         match expr{
             BinaryExpr => idx = 0,
@@ -188,7 +189,7 @@ impl Interpreter{
         if let distance = self.locals[idx][0]{
             return self.environment.getAt(distance, name.lexeme); 
         }else{
-            return globals.get(name);
+            return Ok(self.globals.get(&name));
         }
     }
 
@@ -259,7 +260,7 @@ impl StmtVisitor<Literal> for Interpreter{
 
     fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<Literal, ScannerError> {
         let new_environment = Box::new(Environment::new_enclosed(&self.environment));
-        self.execute_block(&stmt.statements, new_environment);
+        self.execute_block(&stmt.statements, *new_environment);
         Ok(Literal::None)
     }
 
@@ -318,8 +319,7 @@ impl ExprVisitor<Literal> for Interpreter{
     }
 
     fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<Literal, ScannerError>{
-        //return Ok(self.environment.get(&expr.name));
-        return self.lookUpVariable(expr.name, Expr::Variable(*expr));
+        return self.lookUpVariable(expr.name.clone(), Expr::Variable(expr.clone()));
     }
 
     fn visit_grouping_expr(&mut self, expression: &GroupingExpr) -> Result<Literal, ScannerError>{
@@ -435,13 +435,13 @@ impl ExprVisitor<Literal> for Interpreter{
         }
 
         if let distance = self.locals[idx][0]{
-            self.environment.assignAt(distance, expr.name.clone(), value);
+            self.environment.assignAt(distance, expr.name.clone(), value.clone());
         }else{
-            self.global.assign(expr.name.clone(), &value);
+            self.globals.assign(expr.name.clone(), &value.clone());
         }
 
         //self.environment.assign(expr.name.clone(), &value);
-        return Ok(value);
+        return Ok(value.clone());
     }
 
     fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Result<Literal, ScannerError> {

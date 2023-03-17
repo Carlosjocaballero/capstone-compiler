@@ -32,19 +32,23 @@ impl Environment {
     }
 
     pub fn ancestor(&self, distance: i32) -> Environment{
-        let environment = self;
+        let mut environment = self;
+        let mut temp: Box<Environment>;
         for i in 0..distance{
-            match environment.enclosing{
-                Some(environmentEnclosing) => environment = &environmentEnclosing,
+            match &environment.enclosing.clone(){
+                Some(environmentEnclosing) => {
+                    temp = environmentEnclosing.clone();
+                    environment = &*temp;
+                },
                 None => ()
             }
         }
-        return *environment;
+        return environment.clone();
     }
 
     pub fn getAt(&self, distance: i32, name: String) -> Result<Literal, ScannerError>{
         match self.ancestor(distance).values.get(&name){
-            Some(x) => return Ok(*x),
+            Some(x) => return Ok(x.clone()),
             None => return Ok(Literal::None)
         }
     }

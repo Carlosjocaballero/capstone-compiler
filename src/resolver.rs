@@ -17,6 +17,7 @@ pub struct Resolver{
     pub currentFunction: FunctionType //Default value is FunctionType::NONE
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum FunctionType{
     NONE,
     FUNCTION
@@ -26,11 +27,7 @@ impl Default for Resolver{
     fn default() -> Self {
         let defaultScopes: Vec<HashMap<String, bool>> = Vec::new();
         Resolver { 
-            interpreter: Interpreter{
-                environment: Environment::new(),
-                error: InterpreterError { is_error: false },
-                locals: vec![vec![]; 7]
-            }, 
+            interpreter: Interpreter::new(), 
             scopes: defaultScopes, 
             error: ResolverError { is_error: false }, 
             currentFunction: FunctionType::NONE 
@@ -104,7 +101,7 @@ impl Resolver{
         }
     }
 
-    fn resolveLocal(&self, expr: Expr, name: Token){
+    fn resolveLocal(&mut self, expr: Expr, name: Token){
         for (idx, scope) in self.scopes.iter().enumerate(){
             if scope.contains_key(&name.lexeme){
                 self.interpreter.resolve(expr, (self.scopes.len() - 1 - idx).try_into().unwrap());
@@ -112,9 +109,23 @@ impl Resolver{
             }
         }
     }
+    
+    fn resolveFunction(&mut self, function: FunctionStmt, _type: FunctionType){
+        let enclosingFunction = self.currentFunction.clone();
+        self.currentFunction = _type;
+        
+        self.beginScope();
 
-    /*resolveFunction 11.5.1 */
+        for param in function.parameters.iter(){
+            self.declare(&param.clone());
+            self.define(param.clone());
+        }
+        let mut body = function.body;
+        self.resolve_stmts(&mut body);
+        self.endScope();
 
+        self.currentFunction = enclosingFunction;
+    }
 
 }
 
@@ -126,13 +137,13 @@ impl ExprVisitor<Literal> for Resolver{
             }
         }
 
-        self.resolveLocal(Expr::Variable(*expr), expr.name);
+        self.resolveLocal(Expr::Variable(expr.clone()), expr.name.clone());
         return Ok(Literal::None);
     }
 
     fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<Literal, ScannerError> {
         self.resolve_expr(*expr.value.clone());
-        self.resolveLocal(Expr::Assign(*expr), expr.name);
+        self.resolveLocal(Expr::Assign(expr.clone()), expr.name.clone());
         return Ok(Literal::None);
     }
 
@@ -142,7 +153,15 @@ impl ExprVisitor<Literal> for Resolver{
         return Ok(Literal::None);
     }
 
-    //11.3.6 - visitCallExpr(expr: &CallExpr)
+    fn visit_calling_expr(&mut self, expr: &CallingExpr) -> Result<Literal, ScannerError> {
+        self.resolve_expr(*expr.callee.clone());
+
+        for argument in expr.arguments.iter(){
+            self.resolve_expr(*argument.clone());
+        }
+
+        return Ok(Literal::None);
+    }
 
     fn visit_grouping_expr(&mut self, expr: &GroupingExpr) -> Result<Literal, ScannerError> {
         self.resolve_expr(*expr.expression.clone());
@@ -153,7 +172,11 @@ impl ExprVisitor<Literal> for Resolver{
         return Ok(Literal::None);
     }
 
-    //11.3.6 - visitLogicalExpr(expr: &LogicalExpr)
+    fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Result<Literal, ScannerError> {
+        self.resolve_expr(*expr.left.clone());
+        self.resolve_expr(*expr.right.clone());
+        return Ok(Literal::None);
+    }
 
     fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Result<Literal, ScannerError> {
         self.resolve_expr(*expr.right.clone());
@@ -180,16 +203,40 @@ impl StmtVisitor<Literal> for Resolver{
         return Ok(Literal::None);
     }
 
-    //11.3.5 - visitFunctionStmt(stmt: &FunctionStmt)
+    fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Result<Literal, ScannerError> {
+        self.declare(&stmt.name.clone());
+        self.define(stmt.name.clone());
+        self.resolveFunction(stmt.clone(), FunctionType::FUNCTION);
+        return Ok(Literal::None);
+    }
     
-    //11.3.6 - visitIfStmt(stmt: &IfStmt)
+    fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<Literal, ScannerError> {
+        self.resolve_expr(*stmt.condition.clone());
+        self.resolve(*stmt.then_branch.clone());
+
+        match stmt.else_branch.clone(){
+            None => (),
+            Some(x) => self.resolve(*x)
+        }
+
+        return Ok(Literal::None);
+    }
     
     fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Result<Literal, ScannerError> {
         self.resolve_expr(*expr.expression.clone());
         return Ok(Literal::None);
     }
 
-    //11.3.6 - visitReturnStmt(stmt: &ReturnStmt)
+    fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Result<Literal, ScannerError> {
+        if self.currentFunction == FunctionType::NONE{
+            self.error.error(stmt.keyword.clone(), "Can't return from top-level code.".to_string());
+        }
+        
+        if stmt.value != Box::new(Expr::Literal(LiteralExpr { value: Some(Literal::None) })){
+            self.resolve_expr(*stmt.value.clone());
+        }
+        return Ok(Literal::None);
+    }
 
     fn visit_var_stmt(&mut self, expr: &VarStmt) -> Result<Literal, ScannerError> {
         self.declare(&expr.name);
@@ -201,5 +248,9 @@ impl StmtVisitor<Literal> for Resolver{
         return Ok(Literal::None);
     }
 
-    //11.3.6 - visitWhileStmt(stmt: &WhileStmt)
+    fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Result<Literal, ScannerError> {
+        self.resolve_expr(*stmt.condition.clone());
+        self.resolve(*stmt.body.clone());
+        return Ok(Literal::None);
+    }
 }
