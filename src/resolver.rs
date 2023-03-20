@@ -104,6 +104,7 @@ impl Resolver{
     fn resolveLocal(&mut self, expr: Expr, name: Token){
         for (idx, scope) in self.scopes.iter().enumerate(){
             if scope.contains_key(&name.lexeme){
+                println!("********RESOLVING LOCAL********");
                 self.interpreter.resolve(expr, (self.scopes.len() - 1 - idx).try_into().unwrap());
                 return;
             }

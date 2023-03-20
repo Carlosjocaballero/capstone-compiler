@@ -60,11 +60,12 @@ impl Interpreter{
     pub fn new() -> Self {
         let mut _globals = Box::new(Environment::new());
         _globals.define("clock".to_owned(), Literal::None);
+        let mut _locals:Vec<Vec<i32>> = Vec::new();
         Self { 
             globals: _globals, 
             environment: Box::new(Environment::new()), 
             error: InterpreterError { is_error: false },
-            locals: vec![vec![]; 7]
+            locals: _locals
         }
     }
 
@@ -126,14 +127,45 @@ impl Interpreter{
     }
 
     pub fn resolve(&mut self, expr: Expr, depth: i32){
+        println!("**************IN INTERPRETER RESOLVER****************");
         match expr{
-            BinaryExpr => self.locals[0].push(depth),
-            GroupingExpr => self.locals[1].push(depth),
-            LiteralExpr => self.locals[2].push(depth),
-            UnaryExpr => self.locals[3].push(depth),
-            VariableExpr => self.locals[4].push(depth),
-            AssignExpr => self.locals[5].push(depth),
-            CloneExpr => self.locals[6].push(depth)
+            Expr::Binary(BinaryExpr) =>{
+                println!("BINARY EXPRESSION");
+                self.locals[0].push(depth);
+            },
+            Expr::Grouping(GroupingExpr) => {
+                println!("GROUPING EXPRESSION");
+                self.locals[1].push(depth);
+            },
+            Expr::Literal(LiteralExpr) => {
+                println!("LITERAL EXPRESSION");
+                self.locals[2].push(depth);
+            },
+            Expr::Unary(UnaryExpr) => {
+                println!("UNARY EXPRESSION");
+                self.locals[3].push(depth);
+            },
+            Expr::Variable(VariableExpr) => {
+                println!("VARIABLE EXPRESSION");
+                self.locals[4].push(depth);
+            },
+            Expr::Assign(AssignExpr) => {
+                println!("ASSIGN EXPRESSION");
+                self.locals[5].push(depth);
+            },
+            Expr::Clone(CloneExpr) => {
+                println!("CLONE EXPRESSION");
+                self.locals[6].push(depth)
+            },
+            Expr::Call(CalExpr) => {
+                println!("CALLING EXPRESSION");
+                self.locals[7].push(depth);
+            },
+            Expr::Logical(LogicalExpr) => {
+                println!("LOGICAL EXPRESSION");
+                self.locals[8].push(depth);
+            }
+
         }
     }
 
@@ -177,14 +209,21 @@ impl Interpreter{
     fn lookUpVariable(&mut self, name: Token, expr: Expr) -> Result<Literal, ScannerError>{
         let idx: usize;
         match expr{
-            BinaryExpr => idx = 0,
-            GroupingExpr => idx = 1,
-            LiteralExpr => idx = 2,
-            UnaryExpr => idx = 3,
-            VariableExpr => idx = 4,
-            AssignExpr => idx = 5,
-            CloneExpr => idx = 6
+            Expr::Binary(BinaryExpr) => idx = 0,
+            Expr::Grouping(GroupingExpr) => idx = 1,
+            Expr::Literal(LiteralExpr) => idx = 2,
+            Expr::Unary(UnaryExpr) => idx = 3,
+            Expr::Variable(VariableExpr) => idx = 4,
+            Expr::Assign(AssignExpr) => idx = 5,
+            Expr::Clone(CloneExpr) => idx = 6,
+            Expr::Call(CallingExpr) => idx = 7,
+            Expr::Logical(LogicalExpr) => idx = 8
         }
+
+        // match self.locals[idx].get(0){
+        //     Some(distance) => return self.environment.getAt(*distance, name.lexeme),
+        //     None => return Ok(self.globals.get(&name))
+        // }
 
         if let distance = self.locals[idx][0]{
             return self.environment.getAt(distance, name.lexeme); 
